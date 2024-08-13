@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/ui">
+        <file>icons/database.png</file>
+        <file>icons/database-create.png</file>
+        <file>icons/table.png</file>
+    </qresource>
+</RCC>

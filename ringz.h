@@ -24,8 +24,17 @@ public:
 private slots:
     void on_actionCreate_triggered();
 
+    void on_actionDsView_triggered(bool checked);
+
 private:
     Ui::Ringz *ui;
     QList<DatabaseConnection*> *connections;
+    // Icons
+    QIcon databaseIcon;
+    QIcon tableIcon;
+    QIcon keysIcon;
+    QIcon primaryKeyIcon;
+    QIcon indexIcon;
+    QIcon columnIcon;
 };
 #endif // RINGZ_H

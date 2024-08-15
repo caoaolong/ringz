@@ -2,6 +2,7 @@
 #define DATABASECONNECTION_H
 
 #include "datasource.h"
+#include "table.h"
 #include <QSqlDatabase>
 
 class DatabaseConnection
@@ -10,7 +11,7 @@ public:
     DatabaseConnection(DatasourceInfo *info);
     QSqlDatabase get() {return conn;};
     DatasourceInfo *datasource() {return info;};
-    QStringList tables();
+    QList<Table*>* tables();
     void close();
 
 private:

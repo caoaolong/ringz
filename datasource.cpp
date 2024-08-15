@@ -13,6 +13,12 @@ Datasource::Datasource(QWidget *parent)
     ui->setupUi(this);
 
     ui->dbType->addItem("MySQL", "QMYSQL");
+
+    setTabOrder(ui->dbType, ui->host);
+    setTabOrder(ui->host, ui->port);
+    setTabOrder(ui->port, ui->username);
+    setTabOrder(ui->username, ui->password);
+    setTabOrder(ui->password, ui->database);
 }
 
 Datasource::~Datasource()

@@ -14,13 +14,19 @@ SOURCES += \
     datasource.cpp \
     entrylist.cpp \
     main.cpp \
-    ringz.cpp
+    ringz.cpp \
+    table.cpp \
+    tablecolumn.cpp \
+    tablekey.cpp
 
 HEADERS += \
     databaseconnection.h \
     datasource.h \
     entrylist.h \
-    ringz.h
+    ringz.h \
+    table.h \
+    tablecolumn.h \
+    tablekey.h
 
 FORMS += \
     datasource.ui \

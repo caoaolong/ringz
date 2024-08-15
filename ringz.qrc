@@ -3,5 +3,9 @@
         <file>icons/database.png</file>
         <file>icons/database-create.png</file>
         <file>icons/table.png</file>
+        <file>icons/folder.png</file>
+        <file>icons/primary_key.png</file>
+        <file>icons/key.png</file>
+        <file>icons/column.png</file>
     </qresource>
 </RCC>

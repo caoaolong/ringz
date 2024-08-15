@@ -10,6 +10,9 @@
     <height>300</height>
    </rect>
   </property>
+  <property name="tabletTracking">
+   <bool>false</bool>
+  </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
@@ -35,6 +38,9 @@
           <height>0</height>
          </size>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
         <property name="minimum">
          <number>1024</number>
         </property>
@@ -54,7 +60,11 @@
        </widget>
       </item>
       <item row="2" column="2" colspan="3">
-       <widget class="QLineEdit" name="username"/>
+       <widget class="QLineEdit" name="username">
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
+       </widget>
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="typeLabel">
@@ -78,7 +88,11 @@
        </widget>
       </item>
       <item row="1" column="2">
-       <widget class="QLineEdit" name="host"/>
+       <widget class="QLineEdit" name="host">
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
+       </widget>
       </item>
       <item row="1" column="3">
        <widget class="QLabel" name="portLabel">
@@ -89,6 +103,9 @@
       </item>
       <item row="3" column="2" colspan="3">
        <widget class="QLineEdit" name="password">
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
         <property name="echoMode">
          <enum>QLineEdit::Password</enum>
         </property>
@@ -109,9 +126,26 @@
        </widget>
       </item>
       <item row="4" column="1" colspan="3">
-       <widget class="QLineEdit" name="database"/>
+       <widget class="QLineEdit" name="database">
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
+       </widget>
       </item>
      </layout>
+     <zorder>database</zorder>
+     <zorder>databaseLabel</zorder>
+     <zorder>port</zorder>
+     <zorder>username</zorder>
+     <zorder>typeLabel</zorder>
+     <zorder>passwordLabel</zorder>
+     <zorder>hostLabel</zorder>
+     <zorder>host</zorder>
+     <zorder>portLabel</zorder>
+     <zorder>password</zorder>
+     <zorder>usernameLabel</zorder>
+     <zorder>select</zorder>
+     <zorder>dbType</zorder>
     </widget>
    </item>
    <item>

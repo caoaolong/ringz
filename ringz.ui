@@ -36,7 +36,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="table"/>
       <widget class="QWidget" name="editor"/>
@@ -140,8 +140,8 @@ QTreeWidgetItem {
    </property>
    <property name="iconSize">
     <size>
-     <width>16</width>
-     <height>16</height>
+     <width>20</width>
+     <height>20</height>
     </size>
    </property>
    <property name="floatable">
@@ -156,8 +156,13 @@ QTreeWidgetItem {
    <addaction name="actionDbCreate"/>
    <addaction name="actionProOpen"/>
    <addaction name="separator"/>
+   <addaction name="actionMdCreate"/>
+   <addaction name="actionProSettings"/>
+   <addaction name="separator"/>
    <addaction name="actionDsView"/>
    <addaction name="actionProView"/>
+   <addaction name="separator"/>
+   <addaction name="actionSettings"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="projectDock">
@@ -279,6 +284,51 @@ QTreeWidgetItem {
    </property>
    <property name="toolTip">
     <string>打开项目</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionMdCreate">
+   <property name="icon">
+    <iconset resource="ringz.qrc">
+     <normaloff>:/ui/icons/model-create.png</normaloff>:/ui/icons/model-create.png</iconset>
+   </property>
+   <property name="text">
+    <string>创建模型</string>
+   </property>
+   <property name="toolTip">
+    <string>创建模型</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionProSettings">
+   <property name="icon">
+    <iconset resource="ringz.qrc">
+     <normaloff>:/ui/icons/project-settings.png</normaloff>:/ui/icons/project-settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>项目设置</string>
+   </property>
+   <property name="toolTip">
+    <string>项目设置</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="icon">
+    <iconset resource="ringz.qrc">
+     <normaloff>:/ui/icons/setting.png</normaloff>:/ui/icons/setting.png</iconset>
+   </property>
+   <property name="text">
+    <string>全局设置</string>
+   </property>
+   <property name="toolTip">
+    <string>全局设置</string>
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>

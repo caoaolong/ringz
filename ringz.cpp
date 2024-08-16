@@ -153,3 +153,9 @@ void Ringz::on_dbTree_customContextMenuRequested(const QPoint &pos)
     qDebug() << item->text(0);
     qDebug() << item->type();
 }
+
+void Ringz::on_actionMdCreate_triggered()
+{
+
+}
+

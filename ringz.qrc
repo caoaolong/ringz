@@ -11,5 +11,8 @@
         <file>icons/project-open.png</file>
         <file>icons/file.png</file>
         <file>logo/maven.png</file>
+        <file>icons/model-create.png</file>
+        <file>icons/setting.png</file>
+        <file>icons/project-settings.png</file>
     </qresource>
 </RCC>

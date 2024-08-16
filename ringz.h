@@ -32,6 +32,8 @@ private slots:
 
     void on_actionProOpen_triggered();
 
+    void on_actionMdCreate_triggered();
+
 private:
     void showProjectTree(QTreeWidgetItem *parent, ProjectItem *item);
 

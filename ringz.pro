@@ -14,6 +14,8 @@ SOURCES += \
     datasource.cpp \
     entrylist.cpp \
     main.cpp \
+    project.cpp \
+    projectitem.cpp \
     ringz.cpp \
     table.cpp \
     tablecolumn.cpp \
@@ -23,6 +25,8 @@ HEADERS += \
     databaseconnection.h \
     datasource.h \
     entrylist.h \
+    project.h \
+    projectitem.h \
     ringz.h \
     table.h \
     tablecolumn.h \
@@ -31,6 +35,7 @@ HEADERS += \
 FORMS += \
     datasource.ui \
     entrylist.ui \
+    project.ui \
     ringz.ui
 
 # Default rules for deployment.

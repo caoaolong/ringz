@@ -7,5 +7,9 @@
         <file>icons/primary_key.png</file>
         <file>icons/key.png</file>
         <file>icons/column.png</file>
+        <file>icons/project.png</file>
+        <file>icons/project-open.png</file>
+        <file>icons/file.png</file>
+        <file>logo/maven.png</file>
     </qresource>
 </RCC>

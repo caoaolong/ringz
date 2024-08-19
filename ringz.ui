@@ -34,13 +34,7 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QStackedWidget" name="stackedWidget">
-      <property name="currentIndex">
-       <number>1</number>
-      </property>
-      <widget class="QWidget" name="table"/>
-      <widget class="QWidget" name="editor"/>
-     </widget>
+     <widget class="QMdiArea" name="mdiArea"/>
     </item>
    </layout>
   </widget>
@@ -50,16 +44,23 @@
      <x>0</x>
      <y>0</y>
      <width>967</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
     <property name="title">
-     <string>数据源</string>
+     <string>文件</string>
     </property>
     <addaction name="actionDbCreate"/>
    </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>编辑</string>
+    </property>
+    <addaction name="actionSettings"/>
+   </widget>
    <addaction name="menu"/>
+   <addaction name="menu_2"/>
   </widget>
   <widget class="QDockWidget" name="dbDock">
    <property name="acceptDrops">
@@ -156,8 +157,10 @@ QTreeWidgetItem {
    <addaction name="actionDbCreate"/>
    <addaction name="actionProOpen"/>
    <addaction name="separator"/>
-   <addaction name="actionMdCreate"/>
    <addaction name="actionProSettings"/>
+   <addaction name="separator"/>
+   <addaction name="actionMdCreate"/>
+   <addaction name="actionSqlCreate"/>
    <addaction name="separator"/>
    <addaction name="actionDsView"/>
    <addaction name="actionProView"/>
@@ -229,7 +232,7 @@ QTreeWidgetItem {
      <normaloff>:/ui/icons/database-create.png</normaloff>:/ui/icons/database-create.png</iconset>
    </property>
    <property name="text">
-    <string>创建</string>
+    <string>创建数据源</string>
    </property>
    <property name="toolTip">
     <string>创建数据源</string>
@@ -325,10 +328,25 @@ QTreeWidgetItem {
      <normaloff>:/ui/icons/setting.png</normaloff>:/ui/icons/setting.png</iconset>
    </property>
    <property name="text">
-    <string>全局设置</string>
+    <string>首选项</string>
    </property>
    <property name="toolTip">
-    <string>全局设置</string>
+    <string>首选项</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionSqlCreate">
+   <property name="icon">
+    <iconset resource="ringz.qrc">
+     <normaloff>:/ui/icons/sql-create.png</normaloff>:/ui/icons/sql-create.png</iconset>
+   </property>
+   <property name="text">
+    <string>新建查询</string>
+   </property>
+   <property name="toolTip">
+    <string>新建查询</string>
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>

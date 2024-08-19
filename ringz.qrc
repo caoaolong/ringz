@@ -14,5 +14,7 @@
         <file>icons/model-create.png</file>
         <file>icons/setting.png</file>
         <file>icons/project-settings.png</file>
+        <file>icons/sql.png</file>
+        <file>icons/sql-create.png</file>
     </qresource>
 </RCC>

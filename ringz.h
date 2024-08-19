@@ -7,6 +7,10 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QTreeWidgetItem>
+#include <QJsonObject>
+
+#define RINGZ_HOME      "/Users/calong/ringz"
+#define RINGZ_CONFIG    "/config.json"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -34,8 +38,14 @@ private slots:
 
     void on_actionMdCreate_triggered();
 
+    void on_actionSqlCreate_triggered();
+
+    void on_actionSettings_triggered();
+
 private:
     void showProjectTree(QTreeWidgetItem *parent, ProjectItem *item);
+
+    void loadPreferences();
 
 private:
     // Tree Item Type
@@ -65,5 +75,7 @@ private:
     QIcon columnIcon;
     QIcon folderIcon;
     QIcon fileIcon;
+
+    QJsonObject preferences;
 };
 #endif // RINGZ_H

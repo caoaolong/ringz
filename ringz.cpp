@@ -2,14 +2,20 @@
 #include "ui_ringz.h"
 #include "project.h"
 #include "datasource.h"
+#include "texteditor.h"
+#include "preferences.h"
 #include <QList>
 #include <QFileDialog>
+#include <QMessageBox>
+#include <QJsonDocument>
 
 Ringz::Ringz(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::Ringz)
 {
     ui->setupUi(this);
+    // 读取配置文件
+    this->loadPreferences();
 
     this->connections = new QList<DatabaseConnection*>();
 
@@ -21,6 +27,10 @@ Ringz::Ringz(QWidget *parent)
     this->columnIcon = QIcon(":/ui/icons/column.png");
     this->folderIcon = QIcon(":/ui/icons/folder.png");
     this->fileIcon = QIcon(":/ui/icons/file.png");
+
+    ui->mdiArea->setViewMode(QMdiArea::TabbedView);
+    ui->mdiArea->setTabsClosable(true);
+    ui->mdiArea->setTabsMovable(true);
 
     ui->dbTree->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->dbTree->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -90,6 +100,8 @@ void Ringz::on_actionDbCreate_triggered()
 
             database->addChild(table);
         }
+        // TODO: 保存数据源信息
+
     }
 }
 
@@ -145,6 +157,21 @@ void Ringz::showProjectTree(QTreeWidgetItem *parent, ProjectItem *item)
     }
 }
 
+void Ringz::loadPreferences()
+{
+    QFile preferencesFile(QString(RINGZ_HOME).append(RINGZ_CONFIG));
+    if (!preferencesFile.open(QFile::ReadOnly)) {
+        QMessageBox::warning(this, "错误", "无法读取配置文件");
+        return;
+    }
+    QByteArray preferencesData = preferencesFile.readAll();
+    preferencesFile.close();
+    QJsonDocument preferenceDoc = QJsonDocument::fromJson(preferencesData);
+    if (preferenceDoc.isObject()) {
+        this->preferences = preferenceDoc.object();
+    }
+}
+
 void Ringz::on_dbTree_customContextMenuRequested(const QPoint &pos)
 {
     Q_UNUSED(pos);
@@ -159,3 +186,17 @@ void Ringz::on_actionMdCreate_triggered()
 
 }
 
+
+void Ringz::on_actionSqlCreate_triggered()
+{
+    qDebug() << this->preferences["editor"];
+    TextEditor *sqlEditor = new TextEditor(TextEditor::SqlEditor, this->preferences["editor"]);
+    ui->mdiArea->addSubWindow(sqlEditor);
+    sqlEditor->show();
+}
+
+void Ringz::on_actionSettings_triggered()
+{
+    Preferences *window = new Preferences();
+    window->show();
+}

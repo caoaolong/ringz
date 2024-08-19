@@ -14,29 +14,37 @@ SOURCES += \
     datasource.cpp \
     entrylist.cpp \
     main.cpp \
+    preferences.cpp \
     project.cpp \
     projectitem.cpp \
     ringz.cpp \
+    syntaxhighlight.cpp \
     table.cpp \
     tablecolumn.cpp \
-    tablekey.cpp
+    tablekey.cpp \
+    texteditor.cpp
 
 HEADERS += \
     databaseconnection.h \
     datasource.h \
     entrylist.h \
+    preferences.h \
     project.h \
     projectitem.h \
     ringz.h \
+    syntaxhighlight.h \
     table.h \
     tablecolumn.h \
-    tablekey.h
+    tablekey.h \
+    texteditor.h
 
 FORMS += \
     datasource.ui \
     entrylist.ui \
+    preferences.ui \
     project.ui \
-    ringz.ui
+    ringz.ui \
+    texteditor.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

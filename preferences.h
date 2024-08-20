@@ -21,6 +21,8 @@ public:
 private slots:
     void on_listWidget_currentRowChanged(int currentRow);
 
+    void on_fontComboBox_currentIndexChanged(int index);
+
 private:
     Ui::Preferences *ui;
 

@@ -1,11 +1,17 @@
 #ifndef TEXTEDITOR_H
 #define TEXTEDITOR_H
 
-#include "syntaxhighlight.h"
 #include <QWidget>
 #include <QFile>
 #include <QVector>
 #include <QRegularExpression>
+#include <QCompleter>
+
+enum EditorType {
+    SqlEditor,
+    JavaEditor,
+    XmlEditor
+};
 
 namespace Ui {
 class TextEditor;
@@ -15,34 +21,22 @@ class TextEditor : public QWidget
 {
     Q_OBJECT
 public:
-    enum EditorType {
-        SqlEditor,
-        JavaEditor,
-        XmlEditor
-    };
-    explicit TextEditor(EditorType type, QJsonValue editorPref, QWidget *parent = nullptr);
+    explicit TextEditor(QString key, EditorType type, QFile *fp, QWidget *parent = nullptr);
     ~TextEditor();
 
+    void appendContent(QString content);
 private:
     Ui::TextEditor *ui;
     EditorType type;
-    QVector<SyntaxFormat> rules;
+    QCompleter *completer;
+    QFile *fp;
+    QString key;
 
-    // Syntax Formater
-    SyntaxHighLight *shl;
-
-    // Text Char Format
-    QTextCharFormat keywordForamt;
-    QTextCharFormat commentForamt;
-    QTextCharFormat numberForamt;
-    QTextCharFormat stringForamt;
-
-    void initSyntaxFormat(QJsonValue hlPref);
-    QTextCharFormat parseSyntaxFormat(QString value);
-    // parse functions
-    QColor parseColor(QString color);
-    bool parseBool(QString value);
-    QStringList getKeywords();
+signals:
+    void windowClosed(QString name);
+    // QWidget interface
+protected:
+    virtual void closeEvent(QCloseEvent *event) override;
 };
 
 #endif // TEXTEDITOR_H

@@ -2,15 +2,18 @@
 #define RINGZ_H
 
 #include "databaseconnection.h"
+#include "texteditor.h"
 #include "projectitem.h"
 #include <QMainWindow>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QTreeWidgetItem>
 #include <QJsonObject>
+#include <QMap>
 
 #define RINGZ_HOME      "/Users/calong/ringz"
 #define RINGZ_CONFIG    "/config.json"
+#define RINGZ_THEME     "/themes/"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -25,6 +28,7 @@ class Ringz : public QMainWindow
 public:
     Ringz(QWidget *parent = nullptr);
     ~Ringz();
+    static QJsonValue getPreference(QString key);
 private slots:
     void on_actionDbCreate_triggered();
 
@@ -42,10 +46,14 @@ private slots:
 
     void on_actionSettings_triggered();
 
+    void on_actionFileOpen_triggered();
+
 private:
     void showProjectTree(QTreeWidgetItem *parent, ProjectItem *item);
 
     void loadPreferences();
+
+    void createEditor(EditorType type, QFile *fp);
 
 private:
     // Tree Item Type
@@ -76,6 +84,7 @@ private:
     QIcon folderIcon;
     QIcon fileIcon;
 
-    QJsonObject preferences;
+    static QJsonObject preferences;
+    QMap<QString, TextEditor*> editors;
 };
 #endif // RINGZ_H

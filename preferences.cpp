@@ -47,3 +47,10 @@ void Preferences::initData()
 {
     QFile conf(QString(RINGZ_HOME).append("/config.json"));
 }
+
+void Preferences::on_fontComboBox_currentIndexChanged(int index)
+{
+    auto font = ui->fontComboBox->currentFont();
+    qDebug() << font.family();
+}
+

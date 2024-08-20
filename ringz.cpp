@@ -9,6 +9,8 @@
 #include <QMessageBox>
 #include <QJsonDocument>
 
+QJsonObject Ringz::preferences = QJsonObject();
+
 Ringz::Ringz(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::Ringz)
@@ -44,6 +46,11 @@ Ringz::Ringz(QWidget *parent)
 Ringz::~Ringz()
 {
     delete ui;
+}
+
+QJsonValue Ringz::getPreference(QString key)
+{
+    return preferences[key];
 }
 
 void Ringz::on_actionDbCreate_triggered()
@@ -172,6 +179,26 @@ void Ringz::loadPreferences()
     }
 }
 
+void Ringz::createEditor(EditorType type, QFile *fp)
+{
+    QString key = "";
+    if (fp) {
+        key = fp->fileName();
+    } else {
+        key = QString::number(QDateTime::currentMSecsSinceEpoch());
+    }
+    TextEditor *editor = new TextEditor(key, type, fp);
+    if (fp) {
+        editor->appendContent(fp->readAll());
+    }
+    connect(editor, &TextEditor::windowClosed, this, [=](QString key){
+        this->editors.remove(key);
+    });
+    this->editors.insert(key, editor);
+    ui->mdiArea->addSubWindow(editor);
+    editor->show();
+}
+
 void Ringz::on_dbTree_customContextMenuRequested(const QPoint &pos)
 {
     Q_UNUSED(pos);
@@ -189,14 +216,31 @@ void Ringz::on_actionMdCreate_triggered()
 
 void Ringz::on_actionSqlCreate_triggered()
 {
-    qDebug() << this->preferences["editor"];
-    TextEditor *sqlEditor = new TextEditor(TextEditor::SqlEditor, this->preferences["editor"]);
-    ui->mdiArea->addSubWindow(sqlEditor);
-    sqlEditor->show();
+    createEditor(SqlEditor, nullptr);
 }
 
 void Ringz::on_actionSettings_triggered()
 {
     Preferences *window = new Preferences();
     window->show();
+}
+
+void Ringz::on_actionFileOpen_triggered()
+{
+    QString filename = QFileDialog::getOpenFileName(
+        this, "打开文件", QDir::homePath(),
+        "文本文件(*.txt *.sql *.java *.xml *.yaml *.yml);;"
+        "SQL文件(*.sql);;"
+        "Java文件(*.sql);;"
+        "Xml文件(*.xml);;"
+        "Yaml文件(*.yaml *.yml)");
+    if (filename.isEmpty()) return;
+    QFile *file = new QFile(filename);
+    if (!file->exists()) return;
+    if (this->editors.contains(filename)) return;
+    if (!file->open(QIODevice::ReadWrite | QIODevice::ExistingOnly)) {
+        QMessageBox::warning(this, "错误", "文件打开失败");
+        return;
+    }
+    createEditor(SqlEditor, file);
 }

@@ -52,6 +52,9 @@
      <string>文件</string>
     </property>
     <addaction name="actionDbCreate"/>
+    <addaction name="actionSqlCreate"/>
+    <addaction name="separator"/>
+    <addaction name="actionFileOpen"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -156,6 +159,7 @@ QTreeWidgetItem {
    </attribute>
    <addaction name="actionDbCreate"/>
    <addaction name="actionProOpen"/>
+   <addaction name="actionFileOpen"/>
    <addaction name="separator"/>
    <addaction name="actionProSettings"/>
    <addaction name="separator"/>
@@ -347,6 +351,21 @@ QTreeWidgetItem {
    </property>
    <property name="toolTip">
     <string>新建查询</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionFileOpen">
+   <property name="icon">
+    <iconset resource="ringz.qrc">
+     <normaloff>:/ui/icons/file.png</normaloff>:/ui/icons/file.png</iconset>
+   </property>
+   <property name="text">
+    <string>打开文件</string>
+   </property>
+   <property name="toolTip">
+    <string>打开文件</string>
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>

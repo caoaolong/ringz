@@ -14,11 +14,14 @@ SOURCES += \
     databaseconnection.cpp \
     datasource.cpp \
     entrylist.cpp \
+    linewidget.cpp \
     main.cpp \
     preferences.cpp \
     project.cpp \
     projectitem.cpp \
+    queryresult.cpp \
     ringz.cpp \
+    rz.cpp \
     syntaxhighlight.cpp \
     table.cpp \
     tablecolumn.cpp \
@@ -30,10 +33,13 @@ HEADERS += \
     databaseconnection.h \
     datasource.h \
     entrylist.h \
+    linewidget.h \
     preferences.h \
     project.h \
     projectitem.h \
+    queryresult.h \
     ringz.h \
+    rz.h \
     syntaxhighlight.h \
     table.h \
     tablecolumn.h \

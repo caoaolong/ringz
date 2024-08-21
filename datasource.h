@@ -2,6 +2,7 @@
 #define DATASOURCE_H
 
 #include <QDialog>
+#include <QJsonObject>
 
 namespace Ui {
 class Datasource;
@@ -10,6 +11,8 @@ class Datasource;
 class DatasourceInfo
 {
 public:
+    DatasourceInfo();
+    DatasourceInfo(QJsonObject value);
     QString getType() const;
     void setType(const QString &newType);
     QString getHost() const;
@@ -22,6 +25,10 @@ public:
     void setDatabase(const QString &newDatabase);
     quint32 getPort() const;
     void setPort(quint32 newPort);
+    bool getActive() const;
+    void setActive(bool newActive);
+    bool getConnect() const;
+    void setConnect(bool newConnect);
 
 private:
     QString type;
@@ -30,6 +37,8 @@ private:
     QString password;
     QString database;
     quint32 port;
+    bool active;
+    bool connect;
 };
 
 class Datasource : public QDialog

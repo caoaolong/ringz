@@ -1,4 +1,5 @@
 #include "codetextedit.h"
+#include "rz.h"
 #include "ringz.h"
 #include <QAbstractItemView>
 #include <QKeyEvent>
@@ -19,18 +20,24 @@ void CodeTextEdit::initialize(EditorType type)
     // 设置字体
     auto props = Ringz::getPreference("editor")["font"].toString().split(",");
     this->font = QFont(props[0], props[1].toInt());
-    font.setBold(parseBool(props[2]));
-    font.setItalic(parseBool(props[3]));
+    font.setBold(Rz::parseBool(props[2]));
+    font.setItalic(Rz::parseBool(props[3]));
     setFont(font);
     // 代码高亮设置
-    this->initSyntaxFormat(Ringz::getPreference("apperence")["theme"].toString());
+    this->initTheme();
     this->shl = new SyntaxHighLight(this->rules);
     this->shl->setDocument(document());
 
-    // QTextBlockFormat block;
-    // block.setLineHeight(editorPref["lineHeight"].toInt(), QTextBlockFormat::LineDistanceHeight);
-    // textCursor().setBlockFormat(block);
-    // textCursor().clearSelection();
+    QTextBlockFormat block;
+    this->lineHeight = Ringz::getPreference("editor")["lineHeight"].toInt();
+    block.setLineHeight(this->lineHeight, QTextBlockFormat::LineDistanceHeight);
+    selectAll();
+    auto cursor = textCursor();
+    cursor.setBlockFormat(block);
+    setTextCursor(cursor);
+
+    cursor.clearSelection();
+    setTextCursor(cursor);
 }
 
 void CodeTextEdit::setCompleter(QCompleter *completer)
@@ -69,6 +76,16 @@ void CodeTextEdit::insertCompletion(const QString &completion)
     setTextCursor(tc);
 }
 
+LineWidget *CodeTextEdit::getLineWidget() const
+{
+    return lineWidget;
+}
+
+void CodeTextEdit::setLineWidget(LineWidget *lineWidget)
+{
+    this->lineWidget = lineWidget;
+}
+
 QString CodeTextEdit::textUnderCursor() const
 {
     QTextCursor tc = textCursor();
@@ -81,8 +98,8 @@ void CodeTextEdit::keyPressEvent(QKeyEvent *e)
     if (c && c->popup()->isVisible()) {
         // The following keys are forwarded by the completer to the widget
         switch (e->key()) {
-        case Qt::Key_Enter:
         case Qt::Key_Return:
+        case Qt::Key_Enter:
         case Qt::Key_Escape:
         case Qt::Key_Tab:
         case Qt::Key_Backtab:
@@ -91,6 +108,10 @@ void CodeTextEdit::keyPressEvent(QKeyEvent *e)
         default:
             break;
         }
+    }
+
+    if (e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) {
+        lineWidget->newLine();
     }
 
     const bool isShortcut = (e->modifiers().testFlag(Qt::ControlModifier) && e->key() == Qt::Key_E); // CTRL+E
@@ -105,7 +126,6 @@ void CodeTextEdit::keyPressEvent(QKeyEvent *e)
     static QString eow("~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-="); // end of word
     const bool hasModifier = (e->modifiers() != Qt::NoModifier) && !ctrlOrShift;
     QString completionPrefix = textUnderCursor();
-    qDebug() << hasModifier;
     if (!isShortcut && (hasModifier || e->text().isEmpty()|| completionPrefix.length() < 3
                         || eow.contains(e->text().right(1)))) {
         c->popup()->hide();
@@ -130,24 +150,13 @@ void CodeTextEdit::focusInEvent(QFocusEvent *event)
     QTextEdit::focusInEvent(event);
 }
 
-void CodeTextEdit::initSyntaxFormat(QString theme)
+void CodeTextEdit::initTheme()
 {
-    QFile themeFile(QString(RINGZ_HOME).append(RINGZ_THEME).append(theme.replace(" ", "-").append(".json")));
-    if (!themeFile.open(QFile::ReadOnly)) {
-        QMessageBox::warning(this, "错误", "无法读取配置文件");
-        return;
-    }
-    QByteArray themeData = themeFile.readAll();
-    themeFile.close();
-    QJsonDocument themeDoc = QJsonDocument::fromJson(themeData);
-    if (themeDoc.isObject()) {
-        this->theme = themeDoc.object();
-    }
     // 设置背景前景色
     QPalette pallete = this->palette();
-    auto colors = this->theme["colors"].toObject();
-    pallete.setColor(QPalette::Base, parseColor(colors["editor.background"].toString()));
-    pallete.setColor(QPalette::Text, parseColor(colors["editor.foreground"].toString()));
+    auto colors = Ringz::getTheme("colors");
+    pallete.setColor(QPalette::Base, Rz::parseColor(colors["editor.background"].toString()));
+    pallete.setColor(QPalette::Text, Rz::parseColor(colors["editor.foreground"].toString()));
     this->setPalette(pallete);
     // rules.clear();
     // auto format = parseSyntaxFormat(hlPref["keyword"].toString());
@@ -163,23 +172,10 @@ QTextCharFormat CodeTextEdit::parseSyntaxFormat(QString value)
 {
     QTextCharFormat format;
     auto vs = value.split(",");
-    format.setForeground(QBrush(parseColor(vs[0])));
-    format.setFontWeight(parseBool(vs[1]) ? QFont::Bold : QFont::Normal);
-    format.setFontItalic(parseBool(vs[2]));
+    format.setForeground(QBrush(Rz::parseColor(vs[0])));
+    format.setFontWeight(Rz::parseBool(vs[1]) ? QFont::Bold : QFont::Normal);
+    format.setFontItalic(Rz::parseBool(vs[2]));
     return format;
-}
-
-QColor CodeTextEdit::parseColor(QString color)
-{
-    int r = color.mid(1, 2).toInt(nullptr, 16);
-    int g = color.mid(3, 2).toInt(nullptr, 16);
-    int b = color.mid(5, 2).toInt(nullptr, 16);
-    return QColor(r, g, b);
-}
-
-bool CodeTextEdit::parseBool(QString value)
-{
-    return value.toLower() == "true";
 }
 
 QStringList CodeTextEdit::getKeywords()

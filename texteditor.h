@@ -6,6 +6,7 @@
 #include <QVector>
 #include <QRegularExpression>
 #include <QCompleter>
+#include <QSqlDatabase>
 
 enum EditorType {
     SqlEditor,
@@ -25,18 +26,24 @@ public:
     ~TextEditor();
 
     void appendContent(QString content);
+    void newLine();
+    QSqlDatabase getConn() const;
+    void setConn(QSqlDatabase newConn);
+
 private:
     Ui::TextEditor *ui;
     EditorType type;
     QCompleter *completer;
     QFile *fp;
     QString key;
-
+    QSqlDatabase conn;
 signals:
     void windowClosed(QString name);
     // QWidget interface
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
+private slots:
+    void on_run_clicked();
 };
 
 #endif // TEXTEDITOR_H

@@ -9,11 +9,13 @@
 #include <QSqlError>
 #include <QTreeWidgetItem>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QMap>
 
 #define RINGZ_HOME      "/Users/calong/ringz"
 #define RINGZ_CONFIG    "/config.json"
 #define RINGZ_THEME     "/themes/"
+#define RINGZ_DATA      "/data.json"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -29,6 +31,8 @@ public:
     Ringz(QWidget *parent = nullptr);
     ~Ringz();
     static QJsonValue getPreference(QString key);
+    static QJsonValue getTheme(QString key);
+    static QJsonValue getData(QString key);
 private slots:
     void on_actionDbCreate_triggered();
 
@@ -50,11 +54,13 @@ private slots:
 
 private:
     void showProjectTree(QTreeWidgetItem *parent, ProjectItem *item);
-
     void loadPreferences();
-
+    void loadUserData();
+    void loadTheme();
+    void loadDatasource(QJsonArray connections);
     void createEditor(EditorType type, QFile *fp);
-
+    void createDatasource(DatasourceInfo *info);
+    void showDatasourceTree(QTreeWidgetItem *parent, DatabaseConnection *conn);
 private:
     // Tree Item Type
     enum DbItemType {
@@ -74,8 +80,10 @@ private:
 
     Ui::Ringz *ui;
     QList<DatabaseConnection*> *connections;
+    DatabaseConnection* activeConnection;
     // Icons
     QIcon databaseIcon;
+    QIcon databaseActiveIcon;
     QIcon tableIcon;
     QIcon keysIcon;
     QIcon primaryKeyIcon;
@@ -85,6 +93,8 @@ private:
     QIcon fileIcon;
 
     static QJsonObject preferences;
+    static QJsonObject data;
+    static QJsonObject theme;
     QMap<QString, TextEditor*> editors;
 };
 #endif // RINGZ_H

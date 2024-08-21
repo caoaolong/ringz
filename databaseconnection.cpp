@@ -15,8 +15,10 @@ DatabaseConnection::DatabaseConnection
     this->conn.setPort(info->getPort());
     this->conn.setDatabaseName(info->getDatabase());
 
-    if (!this->conn.open())
-        QMessageBox::information(nullptr, "错误", this->conn.lastError().text());
+    if (info->getConnect()) {
+        if (!this->conn.open())
+            QMessageBox::information(nullptr, "错误", this->conn.lastError().text());
+    }
 }
 
 QList<Table*>* DatabaseConnection::tables()
@@ -67,5 +69,12 @@ QList<Table*>* DatabaseConnection::tables()
 
 void DatabaseConnection::close()
 {
-    this->conn.close();
+    if(this->conn.isOpen()) {
+        this->conn.close();
+    }
+}
+
+void DatabaseConnection::connect()
+{
+    this->conn.open();
 }

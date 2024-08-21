@@ -10,6 +10,8 @@
 #include <QJsonDocument>
 
 QJsonObject Ringz::preferences = QJsonObject();
+QJsonObject Ringz::data = QJsonObject();
+QJsonObject Ringz::theme = QJsonObject();
 
 Ringz::Ringz(QWidget *parent)
     : QMainWindow(parent)
@@ -18,10 +20,13 @@ Ringz::Ringz(QWidget *parent)
     ui->setupUi(this);
     // 读取配置文件
     this->loadPreferences();
+    // 读取主题
+    this->loadTheme();
 
     this->connections = new QList<DatabaseConnection*>();
 
     this->databaseIcon = QIcon(":/ui/icons/database.png");
+    this->databaseActiveIcon = QIcon(":/ui/icons/database-active.png");
     this->tableIcon = QIcon(":/ui/icons/table.png");
     this->keysIcon = QIcon(":/ui/icons/folder.png");
     this->primaryKeyIcon = QIcon(":/ui/icons/primary_key.png");
@@ -41,6 +46,9 @@ Ringz::Ringz(QWidget *parent)
     ui->actionProView->setChecked(!ui->projectDock->isHidden());
 
     this->tabifyDockWidget(ui->dbDock, ui->projectDock);
+
+    // 加载用户数据
+    this->loadUserData();
 }
 
 Ringz::~Ringz()
@@ -53,63 +61,21 @@ QJsonValue Ringz::getPreference(QString key)
     return preferences[key];
 }
 
+QJsonValue Ringz::getTheme(QString key)
+{
+    return theme[key];
+}
+
+QJsonValue Ringz::getData(QString key)
+{
+    return data[key];
+}
+
 void Ringz::on_actionDbCreate_triggered()
 {
     DatasourceInfo *info = new DatasourceInfo();
-    if (Datasource::create(info)) {
-        DatabaseConnection *conn = new DatabaseConnection(info);
-        this->connections->append(conn);
-        QTreeWidgetItem *database = new QTreeWidgetItem(DatabaseItem);
-        database->setIcon(0, databaseIcon);
-        database->setText(0, info->getDatabase());
-        ui->dbTree->addTopLevelItem(database);
-        auto tables = conn->tables();
-        for (Table* &item : *tables) {
-            QTreeWidgetItem *table = new QTreeWidgetItem(TableItem);
-            table->setIcon(0, tableIcon);
-            table->setText(0, item->getName());
-
-            QTreeWidgetItem *primaryKeysItem = new QTreeWidgetItem(PrimaryKeysItem);
-            primaryKeysItem->setIcon(0, keysIcon);
-            primaryKeysItem->setText(0, "键");
-            auto primaryKeys = item->getPrimaryKeys();
-            for (TableKey* &key : *primaryKeys) {
-                QTreeWidgetItem *keyItem = new QTreeWidgetItem(PrimaryKeyItem);
-                keyItem->setIcon(0, primaryKeyIcon);
-                keyItem->setText(0, key->getName());
-                primaryKeysItem->addChild(keyItem);
-            }
-            table->addChild(primaryKeysItem);
-
-            QTreeWidgetItem *indexesItem = new QTreeWidgetItem(IndexesItem);
-            indexesItem->setIcon(0, keysIcon);
-            indexesItem->setText(0, "索引");
-            auto indexes = item->getIndexes();
-            for (TableKey* &key : *indexes) {
-                QTreeWidgetItem *keyItem = new QTreeWidgetItem(IndexItem);
-                keyItem->setIcon(0, indexIcon);
-                keyItem->setText(0, key->getName());
-                indexesItem->addChild(keyItem);
-            }
-            table->addChild(indexesItem);
-
-            QTreeWidgetItem *columnItem = new QTreeWidgetItem(ColumnsItem);
-            columnItem->setIcon(0, keysIcon);
-            columnItem->setText(0, "字段");
-            auto columns = item->getColumns();
-            for (TableColumn* &column : *columns) {
-                QTreeWidgetItem *keyItem = new QTreeWidgetItem(ColumnItem);
-                keyItem->setIcon(0, columnIcon);
-                keyItem->setText(0, column->getName());
-                columnItem->addChild(keyItem);
-            }
-            table->addChild(columnItem);
-
-            database->addChild(table);
-        }
-        // TODO: 保存数据源信息
-
-    }
+    if (Datasource::create(info))
+        createDatasource(info);
 }
 
 void Ringz::on_actionDsView_triggered(bool checked)
@@ -179,6 +145,48 @@ void Ringz::loadPreferences()
     }
 }
 
+void Ringz::loadUserData()
+{
+    QFile file(QString(RINGZ_HOME).append(RINGZ_DATA));
+
+    if (!file.exists()) return;
+    if(!file.open(QIODevice::ReadWrite)) return;
+
+    QByteArray userData = file.readAll();
+    QJsonDocument dataDoc = QJsonDocument::fromJson(userData);
+    if (dataDoc.isObject()) {
+        this->data = dataDoc.object();
+    }
+    // 加载数据源
+    loadDatasource(data["datasources"].toArray());
+}
+
+void Ringz::loadTheme()
+{
+    auto apperence = this->preferences["apperence"].toObject();
+    QFile themeFile(
+        QString(RINGZ_HOME).append(RINGZ_THEME).
+        append(apperence["theme"].toString().replace(" ", "-").append(".json")));
+    if (!themeFile.open(QFile::ReadOnly)) {
+        QMessageBox::warning(this, "错误", "无法读取配置文件");
+        return;
+    }
+    QByteArray themeData = themeFile.readAll();
+    themeFile.close();
+    QJsonDocument themeDoc = QJsonDocument::fromJson(themeData);
+    if (themeDoc.isObject()) {
+        this->theme = themeDoc.object();
+    }
+}
+
+void Ringz::loadDatasource(QJsonArray connections)
+{
+    for (auto item : connections) {
+        DatasourceInfo *info = new DatasourceInfo(item.toObject());
+        createDatasource(info);
+    }
+}
+
 void Ringz::createEditor(EditorType type, QFile *fp)
 {
     QString key = "";
@@ -191,12 +199,79 @@ void Ringz::createEditor(EditorType type, QFile *fp)
     if (fp) {
         editor->appendContent(fp->readAll());
     }
+    if (type == SqlEditor) {
+        editor->setConn(this->activeConnection->get());
+    }
     connect(editor, &TextEditor::windowClosed, this, [=](QString key){
         this->editors.remove(key);
     });
     this->editors.insert(key, editor);
     ui->mdiArea->addSubWindow(editor);
     editor->show();
+}
+
+void Ringz::createDatasource(DatasourceInfo *info)
+{
+    DatabaseConnection *conn = new DatabaseConnection(info);
+    this->connections->append(conn);
+    QTreeWidgetItem *database = new QTreeWidgetItem(DatabaseItem);
+    if (info->getActive()) {
+        database->setIcon(0, databaseActiveIcon);
+        this->showDatasourceTree(database, conn);
+        this->activeConnection = conn;
+    } else {
+        database->setIcon(0, databaseIcon);
+    }
+    database->setText(0, info->getDatabase());
+    ui->dbTree->addTopLevelItem(database);
+}
+
+void Ringz::showDatasourceTree(QTreeWidgetItem *parent, DatabaseConnection *conn)
+{
+    auto tables = conn->tables();
+    for (Table* &item : *tables) {
+        QTreeWidgetItem *table = new QTreeWidgetItem(TableItem);
+        table->setIcon(0, tableIcon);
+        table->setText(0, item->getName());
+
+        QTreeWidgetItem *primaryKeysItem = new QTreeWidgetItem(PrimaryKeysItem);
+        primaryKeysItem->setIcon(0, keysIcon);
+        primaryKeysItem->setText(0, "键");
+        auto primaryKeys = item->getPrimaryKeys();
+        for (TableKey* &key : *primaryKeys) {
+            QTreeWidgetItem *keyItem = new QTreeWidgetItem(PrimaryKeyItem);
+            keyItem->setIcon(0, primaryKeyIcon);
+            keyItem->setText(0, key->getName());
+            primaryKeysItem->addChild(keyItem);
+        }
+        table->addChild(primaryKeysItem);
+
+        QTreeWidgetItem *indexesItem = new QTreeWidgetItem(IndexesItem);
+        indexesItem->setIcon(0, keysIcon);
+        indexesItem->setText(0, "索引");
+        auto indexes = item->getIndexes();
+        for (TableKey* &key : *indexes) {
+            QTreeWidgetItem *keyItem = new QTreeWidgetItem(IndexItem);
+            keyItem->setIcon(0, indexIcon);
+            keyItem->setText(0, key->getName());
+            indexesItem->addChild(keyItem);
+        }
+        table->addChild(indexesItem);
+
+        QTreeWidgetItem *columnItem = new QTreeWidgetItem(ColumnsItem);
+        columnItem->setIcon(0, keysIcon);
+        columnItem->setText(0, "字段");
+        auto columns = item->getColumns();
+        for (TableColumn* &column : *columns) {
+            QTreeWidgetItem *keyItem = new QTreeWidgetItem(ColumnItem);
+            keyItem->setIcon(0, columnIcon);
+            keyItem->setText(0, column->getName());
+            columnItem->addChild(keyItem);
+        }
+        table->addChild(columnItem);
+
+        parent->addChild(table);
+    }
 }
 
 void Ringz::on_dbTree_customContextMenuRequested(const QPoint &pos)

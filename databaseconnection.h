@@ -13,6 +13,7 @@ public:
     DatasourceInfo *datasource() {return info;};
     QList<Table*>* tables();
     void close();
+    void connect();
 
 private:
     DatasourceInfo *info;

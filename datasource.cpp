@@ -46,6 +46,23 @@ DatasourceInfo* Datasource::create(DatasourceInfo *info)
 }
 
 
+DatasourceInfo::DatasourceInfo()
+{
+
+}
+
+DatasourceInfo::DatasourceInfo(QJsonObject value)
+{
+    this->type = value["type"].toString();
+    this->host = value["host"].toString();
+    this->username = value["username"].toString();
+    this->password = value["password"].toString();
+    this->port = value["port"].toInt();
+    this->database = value["database"].toString();
+    this->active = value["active"].toBool();
+    this->connect = value["connect"].toBool();
+}
+
 QString DatasourceInfo::getType() const
 {
     return type;
@@ -104,6 +121,26 @@ quint32 DatasourceInfo::getPort() const
 void DatasourceInfo::setPort(quint32 newPort)
 {
     port = newPort;
+}
+
+bool DatasourceInfo::getActive() const
+{
+    return active;
+}
+
+void DatasourceInfo::setActive(bool newActive)
+{
+    active = newActive;
+}
+
+bool DatasourceInfo::getConnect() const
+{
+    return connect;
+}
+
+void DatasourceInfo::setConnect(bool newConnect)
+{
+    connect = newConnect;
 }
 
 void Datasource::on_dbType_currentIndexChanged(int index)

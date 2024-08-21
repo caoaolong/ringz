@@ -16,5 +16,7 @@
         <file>icons/project-settings.png</file>
         <file>icons/sql.png</file>
         <file>icons/sql-create.png</file>
+        <file>icons/run.png</file>
+        <file>icons/database-active.png</file>
     </qresource>
 </RCC>

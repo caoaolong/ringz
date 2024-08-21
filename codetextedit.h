@@ -2,6 +2,7 @@
 #define CODETEXTEDIT_H
 
 #include "syntaxhighlight.h"
+#include "linewidget.h"
 #include "texteditor.h"
 #include <QTextEdit>
 #include <QCompleter>
@@ -15,16 +16,23 @@ public:
     void initialize(EditorType type);
     void setCompleter(QCompleter *c);
     QCompleter *completer() const;
+    LineWidget *getLineWidget() const;
+    void setLineWidget(LineWidget *newLineWidth);
 
 private slots:
     void insertCompletion(const QString &completion);
 
 private:
+    // ui widget
     QCompleter *c = nullptr;
+    LineWidget *lineWidget = nullptr;
+
+    // properties
     EditorType type;
     QVector<SyntaxFormat> rules;
     QJsonObject theme;
     QFont font;
+    int lineHeight;
 
     // Syntax Formater
     SyntaxHighLight *shl;
@@ -39,11 +47,9 @@ private:
 
     // init functions
     void initCompleter(EditorType type);
-    void initSyntaxFormat(QString theme);
+    void initTheme();
     // parse functions
     QTextCharFormat parseSyntaxFormat(QString value);
-    QColor parseColor(QString color);
-    bool parseBool(QString value);
     QStringList getKeywords();
 
     // QWidget interface

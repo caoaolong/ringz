@@ -3,11 +3,14 @@
 #include "project.h"
 #include "datasource.h"
 #include "texteditor.h"
+#include "dataview.h"
 #include "preferences.h"
 #include <QList>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QJsonDocument>
+#include <QLabel>
+
 
 QJsonObject Ringz::preferences = QJsonObject();
 QJsonObject Ringz::data = QJsonObject();
@@ -197,15 +200,18 @@ void Ringz::createEditor(EditorType type, QFile *fp)
     }
     TextEditor *editor = new TextEditor(key, type, fp);
     if (fp) {
+        editor->setWindowTitle(fp->fileName());
         editor->appendContent(fp->readAll());
+    } else {
+        editor->setWindowTitle("untitled");
     }
     if (type == SqlEditor) {
         editor->setConn(this->activeConnection->get());
     }
     connect(editor, &TextEditor::windowClosed, this, [=](QString key){
-        this->editors.remove(key);
+        this->windows.remove(key);
     });
-    this->editors.insert(key, editor);
+    this->windows.insert(key, editor);
     ui->mdiArea->addSubWindow(editor);
     editor->show();
 }
@@ -312,10 +318,25 @@ void Ringz::on_actionFileOpen_triggered()
     if (filename.isEmpty()) return;
     QFile *file = new QFile(filename);
     if (!file->exists()) return;
-    if (this->editors.contains(filename)) return;
+    if (this->windows.contains(filename)) return;
     if (!file->open(QIODevice::ReadWrite | QIODevice::ExistingOnly)) {
         QMessageBox::warning(this, "错误", "文件打开失败");
         return;
     }
     createEditor(SqlEditor, file);
+}
+
+void Ringz::on_dbTree_itemDoubleClicked(QTreeWidgetItem *item, int column)
+{
+    Q_UNUSED(column);
+    if (item->type() != TableItem) return;
+
+    QString key = QString(item->parent()->text(0)).append(".").append(item->text(0));
+    if (this->windows.contains(key)) return;
+
+    DataView *window = new DataView(this->activeConnection->get(), item->text(0), this);
+    window->setWindowTitle(key);
+    this->windows.insert(key, window);
+    ui->mdiArea->addSubWindow(window);
+    window->show();
 }

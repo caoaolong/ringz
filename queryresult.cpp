@@ -16,14 +16,6 @@ QueryResult::~QueryResult()
     delete selectionModel;
 }
 
-void QueryResult::show(QSqlDatabase db)
-{
-    // QueryResult *instance = new QueryResult();
-    // QSqlTableModel *model = new QSqlTableModel(instance, db);
-    // model->setTable("app_version");
-
-}
-
 void QueryResult::show(QString sql)
 {
     model = new QSqlQueryModel(this);

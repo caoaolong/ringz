@@ -13,6 +13,7 @@ SOURCES += \
     codetextedit.cpp \
     databaseconnection.cpp \
     datasource.cpp \
+    dataview.cpp \
     entrylist.cpp \
     linewidget.cpp \
     main.cpp \
@@ -32,6 +33,7 @@ HEADERS += \
     codetextedit.h \
     databaseconnection.h \
     datasource.h \
+    dataview.h \
     entrylist.h \
     linewidget.h \
     preferences.h \
@@ -48,6 +50,7 @@ HEADERS += \
 
 FORMS += \
     datasource.ui \
+    dataview.ui \
     entrylist.ui \
     preferences.ui \
     project.ui \

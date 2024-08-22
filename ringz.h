@@ -52,6 +52,8 @@ private slots:
 
     void on_actionFileOpen_triggered();
 
+    void on_dbTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
+
 private:
     void showProjectTree(QTreeWidgetItem *parent, ProjectItem *item);
     void loadPreferences();
@@ -95,6 +97,6 @@ private:
     static QJsonObject preferences;
     static QJsonObject data;
     static QJsonObject theme;
-    QMap<QString, TextEditor*> editors;
+    QMap<QString, QWidget*> windows;
 };
 #endif // RINGZ_H

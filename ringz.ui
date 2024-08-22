@@ -80,7 +80,7 @@
     <bool>false</bool>
    </property>
    <property name="features">
-    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
    </property>
    <property name="windowTitle">
     <string>数据源</string>
@@ -171,7 +171,6 @@ QTreeWidgetItem {
    <addaction name="separator"/>
    <addaction name="actionSettings"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="projectDock">
    <property name="tabletTracking">
     <bool>false</bool>
@@ -187,7 +186,7 @@ QTreeWidgetItem {
     <bool>false</bool>
    </property>
    <property name="features">
-    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
    </property>
    <property name="windowTitle">
     <string>工程目录</string>
@@ -230,6 +229,7 @@ QTreeWidgetItem {
     </layout>
    </widget>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionDbCreate">
    <property name="icon">
     <iconset resource="ringz.qrc">

@@ -16,7 +16,6 @@ class QueryResult : public QTableView
 public:
     QueryResult(QWidget *parent = nullptr);
     ~QueryResult();
-    void show(QSqlDatabase db);
     void show(QString sql);
     void initTheme();
 private:

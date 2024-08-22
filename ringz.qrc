@@ -18,5 +18,9 @@
         <file>icons/sql-create.png</file>
         <file>icons/run.png</file>
         <file>icons/database-active.png</file>
+        <file>icons/submit.png</file>
+        <file>icons/refresh.png</file>
+        <file>icons/insert.png</file>
+        <file>icons/delete.png</file>
     </qresource>
 </RCC>

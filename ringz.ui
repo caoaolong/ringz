@@ -165,6 +165,7 @@ QTreeWidgetItem {
    <addaction name="separator"/>
    <addaction name="actionMdCreate"/>
    <addaction name="actionSqlCreate"/>
+   <addaction name="actionSqlDesign"/>
    <addaction name="separator"/>
    <addaction name="actionDsView"/>
    <addaction name="actionProView"/>
@@ -366,6 +367,21 @@ QTreeWidgetItem {
    </property>
    <property name="toolTip">
     <string>打开文件</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionSqlDesign">
+   <property name="icon">
+    <iconset resource="ringz.qrc">
+     <normaloff>:/ui/icons/design.png</normaloff>:/ui/icons/design.png</iconset>
+   </property>
+   <property name="text">
+    <string>设计查询</string>
+   </property>
+   <property name="toolTip">
+    <string>设计查询</string>
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>

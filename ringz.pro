@@ -23,10 +23,12 @@ SOURCES += \
     queryresult.cpp \
     ringz.cpp \
     rz.cpp \
+    sqldesignview.cpp \
     syntaxhighlight.cpp \
     table.cpp \
     tablecolumn.cpp \
     tablekey.cpp \
+    tableview.cpp \
     texteditor.cpp
 
 HEADERS += \
@@ -42,10 +44,12 @@ HEADERS += \
     queryresult.h \
     ringz.h \
     rz.h \
+    sqldesignview.h \
     syntaxhighlight.h \
     table.h \
     tablecolumn.h \
     tablekey.h \
+    tableview.h \
     texteditor.h
 
 FORMS += \
@@ -55,6 +59,8 @@ FORMS += \
     preferences.ui \
     project.ui \
     ringz.ui \
+    sqldesignview.ui \
+    tableview.ui \
     texteditor.ui
 
 # Default rules for deployment.

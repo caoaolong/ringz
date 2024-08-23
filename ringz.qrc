@@ -22,5 +22,8 @@
         <file>icons/refresh.png</file>
         <file>icons/insert.png</file>
         <file>icons/delete.png</file>
+        <file>icons/struct.png</file>
+        <file>icons/build.png</file>
+        <file>icons/design.png</file>
     </qresource>
 </RCC>

@@ -14,3 +14,12 @@ bool Rz::parseBool(QString value)
 {
     return value.toLower() == "true";
 }
+
+QFont Rz::parseFont(QString fontValue)
+{
+    auto props = fontValue.split(",");
+    QFont font = QFont(props[0], props[1].toInt());
+    font.setBold(parseBool(props[2]));
+    font.setItalic(parseBool(props[3]));
+    return font;
+}

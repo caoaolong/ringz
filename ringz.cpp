@@ -1,16 +1,19 @@
 #include "ringz.h"
+#include "rz.h"
 #include "ui_ringz.h"
+#include "sqldesignview.h"
 #include "project.h"
 #include "datasource.h"
 #include "texteditor.h"
 #include "dataview.h"
 #include "preferences.h"
+#include "tableview.h"
 #include <QList>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QJsonDocument>
 #include <QLabel>
-
+#include <QAction>
 
 QJsonObject Ringz::preferences = QJsonObject();
 QJsonObject Ringz::data = QJsonObject();
@@ -25,9 +28,12 @@ Ringz::Ringz(QWidget *parent)
     this->loadPreferences();
     // 读取主题
     this->loadTheme();
-
+    // 加载右键菜单
+    this->loadMenu();
+    // 成员变量
     this->connections = new QList<DatabaseConnection*>();
-
+    this->projects = new QList<ProjectInfo*>();
+    // Icons
     this->databaseIcon = QIcon(":/ui/icons/database.png");
     this->databaseActiveIcon = QIcon(":/ui/icons/database-active.png");
     this->tableIcon = QIcon(":/ui/icons/table.png");
@@ -41,9 +47,11 @@ Ringz::Ringz(QWidget *parent)
     ui->mdiArea->setViewMode(QMdiArea::TabbedView);
     ui->mdiArea->setTabsClosable(true);
     ui->mdiArea->setTabsMovable(true);
-
+    // 菜单代理
     ui->dbTree->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->dbTree->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->projectTree->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->projectTree->setSelectionMode(QAbstractItemView::SingleSelection);
 
     ui->actionDsView->setChecked(!ui->dbDock->isHidden());
     ui->actionProView->setChecked(!ui->projectDock->isHidden());
@@ -107,18 +115,13 @@ void Ringz::on_actionProOpen_triggered()
     if (projectDir.isEmpty()) return;
 
     ProjectInfo *info = new ProjectInfo(projectDir);
-    QTreeWidgetItem *project = new QTreeWidgetItem(FolderItem);
-    project->setIcon(0, ProjectInfo::getIcon(info->getType()));
-    project->setText(0, info->getRoot()->getName());
-    ui->projectTree->addTopLevelItem(project);
-
-    this->showProjectTree(project, info->getRoot());
+    createProject(info);
 }
 
 void Ringz::showProjectTree(QTreeWidgetItem *parent, ProjectItem *item)
 {
     for (auto item : *item->getChildren()) {
-        if (item->getType() == ProjectItem::Folder) {
+        if (item->getType() == Folder) {
             QTreeWidgetItem *treeItem = new QTreeWidgetItem(FolderItem);
             treeItem->setText(0, item->getName());
             treeItem->setIcon(0, folderIcon);
@@ -131,6 +134,17 @@ void Ringz::showProjectTree(QTreeWidgetItem *parent, ProjectItem *item)
             parent->addChild(treeItem);
         }
     }
+}
+
+void Ringz::createProject(ProjectInfo *info)
+{
+    this->projects->append(info);
+    QTreeWidgetItem *project = new QTreeWidgetItem(ProjectFolderItem);
+    project->setIcon(0, ProjectInfo::getIcon(info->getType()));
+    project->setText(0, info->getRoot()->getName());
+    ui->projectTree->addTopLevelItem(project);
+
+    this->showProjectTree(project, info->getRoot());
 }
 
 void Ringz::loadPreferences()
@@ -146,6 +160,9 @@ void Ringz::loadPreferences()
     if (preferenceDoc.isObject()) {
         this->preferences = preferenceDoc.object();
     }
+    // 设置全局字体
+    auto apperence = this->getPreference("apperence").toObject();
+    QApplication::setFont(Rz::parseFont(apperence["font"].toString()));
 }
 
 void Ringz::loadUserData()
@@ -162,6 +179,8 @@ void Ringz::loadUserData()
     }
     // 加载数据源
     loadDatasource(data["datasources"].toArray());
+    // 加载项目
+    loadProject(data["projects"].toArray());
 }
 
 void Ringz::loadTheme()
@@ -182,6 +201,18 @@ void Ringz::loadTheme()
     }
 }
 
+void Ringz::loadMenu()
+{
+    // table menu
+    QAction *structAction = new QAction(QIcon(":/ui/icons/struct.png"), "结构", this);
+    connect(structAction, &QAction::triggered, this, &Ringz::createTableView);
+    QAction *buildAction = new QAction(QIcon(":/ui/icons/build.png"), "构建", this);
+    this->tableMenu.addAction(structAction);
+    this->tableMenu.addAction(buildAction);
+
+    this->projectMenu.addAction(structAction);
+}
+
 void Ringz::loadDatasource(QJsonArray connections)
 {
     for (auto item : connections) {
@@ -190,7 +221,20 @@ void Ringz::loadDatasource(QJsonArray connections)
     }
 }
 
-void Ringz::createEditor(EditorType type, QFile *fp)
+void Ringz::loadProject(QJsonArray projects)
+{
+    for (auto item : projects) {
+        auto entry = item.toObject();
+        ProjectInfo *info = new ProjectInfo(entry["path"].toString());
+        info->setActive(Rz::parseBool(entry["active"].toString()));
+        if (info->getActive()) {
+            this->activeProject = info;
+        }
+        createProject(info);
+    }
+}
+
+void Ringz::createEditorView(EditorType type, QFile *fp)
 {
     QString key = "";
     if (fp) {
@@ -216,6 +260,41 @@ void Ringz::createEditor(EditorType type, QFile *fp)
     editor->show();
 }
 
+void Ringz::createDataView(QTreeWidgetItem *item, int column)
+{
+    QString key = QString(item->parent()->text(column)).append(".").append(item->text(column));
+    if (this->windows.contains(key)) return;
+
+    DataView *window = new DataView(this->activeConnection->get(), item->text(0), this);
+    window->setWindowTitle(key);
+    this->windows.insert(key, window);
+    ui->mdiArea->addSubWindow(window);
+    window->show();
+}
+
+void Ringz::createTableView()
+{
+    auto item = ui->dbTree->currentItem();
+    QString database = item->parent()->text(ColumnLabel);
+    QString table = item->text(ColumnLabel);
+    QString key = QString("表结构[%1.%2]").arg(database, table);
+    if (this->windows.contains(key)) return;
+
+    TableView *window = new TableView(activeConnection->get(), table, activeProject, this);
+    window->setWindowTitle(key);
+    this->windows.insert(key, window);
+    ui->mdiArea->addSubWindow(window);
+    window->show();
+}
+
+void Ringz::createDesignView()
+{
+    SqlDesignView *window = new SqlDesignView();
+    this->windows.insert(QString::number(QDateTime::currentMSecsSinceEpoch()), window);
+    ui->mdiArea->addSubWindow(window);
+    window->show();
+}
+
 void Ringz::createDatasource(DatasourceInfo *info)
 {
     DatabaseConnection *conn = new DatabaseConnection(info);
@@ -237,8 +316,8 @@ void Ringz::showDatasourceTree(QTreeWidgetItem *parent, DatabaseConnection *conn
     auto tables = conn->tables();
     for (Table* &item : *tables) {
         QTreeWidgetItem *table = new QTreeWidgetItem(TableItem);
-        table->setIcon(0, tableIcon);
-        table->setText(0, item->getName());
+        table->setIcon(ColumnLabel, tableIcon);
+        table->setText(ColumnLabel, item->getName());
 
         QTreeWidgetItem *primaryKeysItem = new QTreeWidgetItem(PrimaryKeysItem);
         primaryKeysItem->setIcon(0, keysIcon);
@@ -246,32 +325,32 @@ void Ringz::showDatasourceTree(QTreeWidgetItem *parent, DatabaseConnection *conn
         auto primaryKeys = item->getPrimaryKeys();
         for (TableKey* &key : *primaryKeys) {
             QTreeWidgetItem *keyItem = new QTreeWidgetItem(PrimaryKeyItem);
-            keyItem->setIcon(0, primaryKeyIcon);
-            keyItem->setText(0, key->getName());
+            keyItem->setIcon(ColumnLabel, primaryKeyIcon);
+            keyItem->setText(ColumnLabel, key->getName());
             primaryKeysItem->addChild(keyItem);
         }
         table->addChild(primaryKeysItem);
 
         QTreeWidgetItem *indexesItem = new QTreeWidgetItem(IndexesItem);
-        indexesItem->setIcon(0, keysIcon);
-        indexesItem->setText(0, "索引");
+        indexesItem->setIcon(ColumnLabel, keysIcon);
+        indexesItem->setText(ColumnLabel, "索引");
         auto indexes = item->getIndexes();
         for (TableKey* &key : *indexes) {
             QTreeWidgetItem *keyItem = new QTreeWidgetItem(IndexItem);
-            keyItem->setIcon(0, indexIcon);
-            keyItem->setText(0, key->getName());
+            keyItem->setIcon(ColumnLabel, indexIcon);
+            keyItem->setText(ColumnLabel, key->getName());
             indexesItem->addChild(keyItem);
         }
         table->addChild(indexesItem);
 
         QTreeWidgetItem *columnItem = new QTreeWidgetItem(ColumnsItem);
-        columnItem->setIcon(0, keysIcon);
-        columnItem->setText(0, "字段");
+        columnItem->setIcon(ColumnLabel, keysIcon);
+        columnItem->setText(ColumnLabel, "字段");
         auto columns = item->getColumns();
         for (TableColumn* &column : *columns) {
             QTreeWidgetItem *keyItem = new QTreeWidgetItem(ColumnItem);
-            keyItem->setIcon(0, columnIcon);
-            keyItem->setText(0, column->getName());
+            keyItem->setIcon(ColumnLabel, columnIcon);
+            keyItem->setText(ColumnLabel, column->getName());
             columnItem->addChild(keyItem);
         }
         table->addChild(columnItem);
@@ -285,8 +364,23 @@ void Ringz::on_dbTree_customContextMenuRequested(const QPoint &pos)
     Q_UNUSED(pos);
     if (ui->dbTree->selectedItems().isEmpty()) return;
     auto item = ui->dbTree->selectedItems().at(0);
-    qDebug() << item->text(0);
-    qDebug() << item->type();
+    switch (item->type()) {
+    case TableItem:
+        this->tableMenu.exec(QCursor::pos());
+        break;
+    }
+}
+
+void Ringz::on_projectTree_customContextMenuRequested(const QPoint &pos)
+{
+    Q_UNUSED(pos);
+    if (ui->projectTree->selectedItems().isEmpty()) return;
+    auto item = ui->projectTree->selectedItems().at(0);
+    switch (item->type()) {
+    case ProjectFolderItem:
+        this->projectMenu.exec(QCursor::pos());
+        break;
+    }
 }
 
 void Ringz::on_actionMdCreate_triggered()
@@ -297,7 +391,7 @@ void Ringz::on_actionMdCreate_triggered()
 
 void Ringz::on_actionSqlCreate_triggered()
 {
-    createEditor(SqlEditor, nullptr);
+    createEditorView(SqlEditor, nullptr);
 }
 
 void Ringz::on_actionSettings_triggered()
@@ -323,20 +417,18 @@ void Ringz::on_actionFileOpen_triggered()
         QMessageBox::warning(this, "错误", "文件打开失败");
         return;
     }
-    createEditor(SqlEditor, file);
+    createEditorView(SqlEditor, file);
 }
 
 void Ringz::on_dbTree_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
-    Q_UNUSED(column);
     if (item->type() != TableItem) return;
-
-    QString key = QString(item->parent()->text(0)).append(".").append(item->text(0));
-    if (this->windows.contains(key)) return;
-
-    DataView *window = new DataView(this->activeConnection->get(), item->text(0), this);
-    window->setWindowTitle(key);
-    this->windows.insert(key, window);
-    ui->mdiArea->addSubWindow(window);
-    window->show();
+    createDataView(item, column);
 }
+
+
+void Ringz::on_actionSqlDesign_triggered()
+{
+
+}
+

@@ -3,13 +3,14 @@
 
 #include "databaseconnection.h"
 #include "texteditor.h"
-#include "projectitem.h"
+#include "project.h"
 #include <QMainWindow>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QTreeWidgetItem>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QMenu>
 #include <QMap>
 
 #define RINGZ_HOME      "/Users/calong/ringz"
@@ -54,15 +55,26 @@ private slots:
 
     void on_dbTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
 
+    void on_projectTree_customContextMenuRequested(const QPoint &pos);
+
+    void on_actionSqlDesign_triggered();
+
 private:
+    void createProject(ProjectInfo *info);
     void showProjectTree(QTreeWidgetItem *parent, ProjectItem *item);
     void loadPreferences();
     void loadUserData();
     void loadTheme();
+    void loadMenu();
     void loadDatasource(QJsonArray connections);
-    void createEditor(EditorType type, QFile *fp);
+    void loadProject(QJsonArray projects);
     void createDatasource(DatasourceInfo *info);
     void showDatasourceTree(QTreeWidgetItem *parent, DatabaseConnection *conn);
+    // create window
+    void createEditorView(EditorType type, QFile *fp);
+    void createDataView(QTreeWidgetItem *item, int column);
+    void createTableView();
+    void createDesignView();
 private:
     // Tree Item Type
     enum DbItemType {
@@ -76,13 +88,26 @@ private:
         ColumnItem
     };
     enum FileItemType {
-        FolderItem = 1001,
+        ProjectFolderItem = 1001,
+        FolderItem,
         FileItem
     };
-
+    enum RoleType {
+        DataRole = 2000
+    };
+    enum ColumnIndex {
+        ColumnLabel = 0
+    };
     Ui::Ringz *ui;
     QList<DatabaseConnection*> *connections;
+    QList<ProjectInfo*> *projects;
     DatabaseConnection* activeConnection;
+    ProjectInfo* activeProject;
+    // Menus
+    QMenu tableMenu;
+    QMenu databaseMenu;
+    QMenu projectMenu;
+    QMenu fileMenu;
     // Icons
     QIcon databaseIcon;
     QIcon databaseActiveIcon;

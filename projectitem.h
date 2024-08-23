@@ -4,18 +4,18 @@
 #include <QString>
 #include <QList>
 
+enum ItemType {
+    Folder = 1001,
+    SourceFolder,
+    ResourceFolder,
+    TestFolder,
+    PackageFolder,
+    File
+};
+
 class ProjectItem
 {
 public:
-    enum ItemType {
-        Folder = 1001,
-        SourceFolder,
-        ResourceFolder,
-        TestFolder,
-        PackageFolder,
-        File
-    };
-
     ProjectItem(QString name, ItemType type = File);
     QList<ProjectItem*> *getChildren() const;
 

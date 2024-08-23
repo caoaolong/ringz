@@ -1,5 +1,10 @@
 #include "table.h"
 
+Table::Table()
+{
+
+}
+
 Table::Table(QString name, QList<TableKey*>* primaryKeys, QList<TableKey*>* indexes, QList<TableColumn*>* columns)
 {
     this->name = name;

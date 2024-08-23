@@ -18,11 +18,8 @@ void CodeTextEdit::initialize(EditorType type)
 {
     this->type = type;
     // 设置字体
-    auto props = Ringz::getPreference("editor")["font"].toString().split(",");
-    this->font = QFont(props[0], props[1].toInt());
-    font.setBold(Rz::parseBool(props[2]));
-    font.setItalic(Rz::parseBool(props[3]));
-    setFont(font);
+    this->font = Rz::parseFont(Ringz::getPreference("editor")["font"].toString());
+    setFont(this->font);
     // 代码高亮设置
     this->initTheme();
     this->shl = new SyntaxHighLight(this->rules);

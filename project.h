@@ -14,11 +14,15 @@ public:
         MavenProject,
         Unknown
     };
-    ProjectInfo(QString dir);
+    ProjectInfo(QString dir, ProjectType type = Unknown);
     ProjectItem *getRoot() const;
     ProjectType getType() const;
     static QIcon getIcon(ProjectType type);
+    bool getActive() const;
+    void setActive(bool newActive);
+
 private:
+    bool active;
     QString workspace;
     ProjectItem* root;
     ProjectType type;

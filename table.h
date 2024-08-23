@@ -7,6 +7,7 @@
 class Table
 {
 public:
+    Table();
     Table(QString name, QList<TableKey*>* primaryKeys, QList<TableKey*>* indexes, QList<TableColumn*>* columns);
     QString getName() const;
     QList<TableKey *> *getPrimaryKeys() const;

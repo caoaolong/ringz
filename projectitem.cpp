@@ -17,7 +17,7 @@ QString ProjectItem::getName() const
     return name;
 }
 
-ProjectItem::ItemType ProjectItem::getType() const
+ItemType ProjectItem::getType() const
 {
     return type;
 }

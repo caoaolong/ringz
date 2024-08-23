@@ -14,20 +14,22 @@ Project::~Project()
     delete ui;
 }
 
-ProjectInfo::ProjectInfo(QString workspace)
+ProjectInfo::ProjectInfo(QString workspace, ProjectType type)
 {
     this->workspace = workspace;
-    this->root = new ProjectItem(workspace.split("/").last(), ProjectItem::Folder);
+    this->root = new ProjectItem(workspace.split("/").last(), Folder);
     this->scan(this->root, workspace);
-    this->type = Unknown;
-
-    auto items = this->root->getChildren();
-    for (auto item : *items) {
-        if (item->getName() == "pom.xml") {
-            this->type = MavenProject;
-            this->parseMavenProject();
-            break;
+    if (type == Unknown) {
+        auto items = this->root->getChildren();
+        for (auto item : *items) {
+            if (item->getName() == "pom.xml") {
+                this->type = MavenProject;
+                this->parseMavenProject();
+                break;
+            }
         }
+    } else {
+        this->type = type;
     }
 }
 
@@ -51,6 +53,16 @@ QIcon ProjectInfo::getIcon(ProjectType type)
     }
 }
 
+bool ProjectInfo::getActive() const
+{
+    return active;
+}
+
+void ProjectInfo::setActive(bool newActive)
+{
+    active = newActive;
+}
+
 void ProjectInfo::scan(ProjectItem *parent, QString workspace)
 {
     QDir dir(workspace);
@@ -64,7 +76,7 @@ void ProjectInfo::scan(ProjectItem *parent, QString workspace)
             ProjectItem *pItem = new ProjectItem(item.fileName());
             parent->getChildren()->append(pItem);
             if (item.isDir()) {
-                pItem->setType(ProjectItem::Folder);
+                pItem->setType(Folder);
                 this->scan(pItem, item.filePath());
             }
         }

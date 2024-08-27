@@ -44,7 +44,7 @@
      <x>0</x>
      <y>0</y>
      <width>967</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -55,6 +55,8 @@
     <addaction name="actionSqlCreate"/>
     <addaction name="separator"/>
     <addaction name="actionFileOpen"/>
+    <addaction name="actionDbImport"/>
+    <addaction name="actionDbExport"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -103,7 +105,7 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QTreeWidget" name="dbTree">
+      <widget class="DragTreeWidget" name="dbTree">
        <property name="layoutDirection">
         <enum>Qt::LeftToRight</enum>
        </property>
@@ -160,6 +162,8 @@ QTreeWidgetItem {
    <addaction name="actionDbCreate"/>
    <addaction name="actionProOpen"/>
    <addaction name="actionFileOpen"/>
+   <addaction name="actionDbImport"/>
+   <addaction name="actionDbExport"/>
    <addaction name="separator"/>
    <addaction name="actionProSettings"/>
    <addaction name="separator"/>
@@ -213,6 +217,15 @@ QTreeWidgetItem {
       <widget class="QTreeWidget" name="projectTree">
        <property name="layoutDirection">
         <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QTreeWidget {
+	background: none;
+}
+
+QTreeWidgetItem {
+	background: none;
+}</string>
        </property>
        <property name="textElideMode">
         <enum>Qt::ElideLeft</enum>
@@ -383,11 +396,51 @@ QTreeWidgetItem {
    <property name="toolTip">
     <string>设计查询</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionDbImport">
+   <property name="icon">
+    <iconset resource="ringz.qrc">
+     <normaloff>:/ui/icons/import.png</normaloff>:/ui/icons/import.png</iconset>
+   </property>
+   <property name="text">
+    <string>导入</string>
+   </property>
+   <property name="toolTip">
+    <string>导入数据库</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionDbExport">
+   <property name="icon">
+    <iconset resource="ringz.qrc">
+     <normaloff>:/ui/icons/export.png</normaloff>:/ui/icons/export.png</iconset>
+   </property>
+   <property name="text">
+    <string>导出</string>
+   </property>
+   <property name="toolTip">
+    <string>导出数据库</string>
+   </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>DragTreeWidget</class>
+   <extends>QTreeWidget</extends>
+   <header location="global">dragtreewidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="ringz.qrc"/>
  </resources>

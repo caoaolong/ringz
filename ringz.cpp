@@ -289,7 +289,8 @@ void Ringz::createTableView()
 
 void Ringz::createDesignView()
 {
-    SqlDesignView *window = new SqlDesignView();
+    SqlDesignView *window = new SqlDesignView(activeConnection->get());
+    window->setWindowTitle("新建设计图");
     this->windows.insert(QString::number(QDateTime::currentMSecsSinceEpoch()), window);
     ui->mdiArea->addSubWindow(window);
     window->show();
@@ -429,6 +430,5 @@ void Ringz::on_dbTree_itemDoubleClicked(QTreeWidgetItem *item, int column)
 
 void Ringz::on_actionSqlDesign_triggered()
 {
-
+    createDesignView();
 }
-

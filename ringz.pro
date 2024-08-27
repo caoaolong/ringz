@@ -14,6 +14,7 @@ SOURCES += \
     databaseconnection.cpp \
     datasource.cpp \
     dataview.cpp \
+    dragtreewidget.cpp \
     entrylist.cpp \
     linewidget.cpp \
     main.cpp \
@@ -24,6 +25,8 @@ SOURCES += \
     ringz.cpp \
     rz.cpp \
     sqldesignview.cpp \
+    sqldesignwidget.cpp \
+    structtable.cpp \
     syntaxhighlight.cpp \
     table.cpp \
     tablecolumn.cpp \
@@ -36,6 +39,7 @@ HEADERS += \
     databaseconnection.h \
     datasource.h \
     dataview.h \
+    dragtreewidget.h \
     entrylist.h \
     linewidget.h \
     preferences.h \
@@ -45,6 +49,8 @@ HEADERS += \
     ringz.h \
     rz.h \
     sqldesignview.h \
+    sqldesignwidget.h \
+    structtable.h \
     syntaxhighlight.h \
     table.h \
     tablecolumn.h \
@@ -60,6 +66,7 @@ FORMS += \
     project.ui \
     ringz.ui \
     sqldesignview.ui \
+    structtable.ui \
     tableview.ui \
     texteditor.ui
 

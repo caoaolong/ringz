@@ -1,4 +1,6 @@
 #include "rz.h"
+#include <QSqlQuery>
+#include <QSqlRecord>
 
 Rz::Rz() {}
 
@@ -22,4 +24,18 @@ QFont Rz::parseFont(QString fontValue)
     font.setBold(parseBool(props[2]));
     font.setItalic(parseBool(props[3]));
     return font;
+}
+
+QList<TableColumn> Rz::tableDesc(QSqlDatabase db, QString table)
+{
+    QSqlQuery query(db);
+    query.exec(QString("show full columns from %1").arg(table));
+    QList<TableColumn> r;
+    while (query.next()) {
+        r.append(TableColumn(
+            query.value("Field").toString(),
+            query.value("Type").toString(),
+            query.value("Comment").toString()));
+    }
+    return r;
 }

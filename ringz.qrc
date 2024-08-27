@@ -25,5 +25,7 @@
         <file>icons/struct.png</file>
         <file>icons/build.png</file>
         <file>icons/design.png</file>
+        <file>icons/import.png</file>
+        <file>icons/export.png</file>
     </qresource>
 </RCC>

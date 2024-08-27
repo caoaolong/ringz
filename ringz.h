@@ -24,6 +24,29 @@ class Ringz;
 }
 QT_END_NAMESPACE
 
+// Tree Item Type
+enum DbItemType {
+    DatabaseItem = 1001,
+    TableItem,
+    PrimaryKeysItem,
+    PrimaryKeyItem,
+    IndexesItem,
+    IndexItem,
+    ColumnsItem,
+    ColumnItem
+};
+enum FileItemType {
+    ProjectFolderItem = 1001,
+    FolderItem,
+    FileItem
+};
+enum RoleType {
+    DataRole = 2000
+};
+enum ColumnIndex {
+    ColumnLabel = 0
+};
+
 class Ringz : public QMainWindow
 {
     Q_OBJECT
@@ -58,7 +81,6 @@ private slots:
     void on_projectTree_customContextMenuRequested(const QPoint &pos);
 
     void on_actionSqlDesign_triggered();
-
 private:
     void createProject(ProjectInfo *info);
     void showProjectTree(QTreeWidgetItem *parent, ProjectItem *item);
@@ -76,28 +98,6 @@ private:
     void createTableView();
     void createDesignView();
 private:
-    // Tree Item Type
-    enum DbItemType {
-        DatabaseItem = 1001,
-        TableItem,
-        PrimaryKeysItem,
-        PrimaryKeyItem,
-        IndexesItem,
-        IndexItem,
-        ColumnsItem,
-        ColumnItem
-    };
-    enum FileItemType {
-        ProjectFolderItem = 1001,
-        FolderItem,
-        FileItem
-    };
-    enum RoleType {
-        DataRole = 2000
-    };
-    enum ColumnIndex {
-        ColumnLabel = 0
-    };
     Ui::Ringz *ui;
     QList<DatabaseConnection*> *connections;
     QList<ProjectInfo*> *projects;

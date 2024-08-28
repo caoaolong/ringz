@@ -44,7 +44,7 @@ void TableView::initTheme()
     // 设置背景前景色
     QPalette pallete = ui->tableView->palette();
     auto colors = Ringz::getTheme("colors");
-    pallete.setColor(QPalette::Base, Rz::parseColor(colors["terminal.background"].toString()));
-    pallete.setColor(QPalette::Text, Rz::parseColor(colors["terminal.foreground"].toString()));
+    pallete.setColor(QPalette::Base, QColor(colors["terminal.background"].toString()));
+    pallete.setColor(QPalette::Text, QColor(colors["terminal.foreground"].toString()));
     ui->tableView->setPalette(pallete);
 }

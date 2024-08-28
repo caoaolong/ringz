@@ -7,6 +7,7 @@ SqlDesignView::SqlDesignView(QSqlDatabase db, QWidget *parent)
 {
     ui->setupUi(this);
     ui->graphicsView->setDb(db);
+    ui->graphicsView->initTheme();
 }
 
 SqlDesignView::~SqlDesignView()
@@ -14,7 +15,29 @@ SqlDesignView::~SqlDesignView()
     delete ui;
 }
 
-void SqlDesignView::initTheme()
+void SqlDesignView::showEvent(QShowEvent *event)
 {
+    int w = ui->graphicsView->width() - 10;
+    int h = ui->graphicsView->height() - 10;
+    QRectF view(-w/2, -h/2, w, h);
+    ui->graphicsView->setSceneRect(view);
+    ui->width->setValue(ui->graphicsView->width());
+    ui->height->setValue(ui->graphicsView->height());
+    event->accept();
+}
 
+void SqlDesignView::on_width_valueChanged(int w)
+{
+    auto rect = ui->graphicsView->sceneRect();
+    rect.setWidth(w);
+    rect.setLeft(-w / 2);
+    ui->graphicsView->setSceneRect(rect);
+}
+
+void SqlDesignView::on_height_valueChanged(int h)
+{
+    auto rect = ui->graphicsView->sceneRect();
+    rect.setHeight(h);
+    rect.setTop(-h / 2);
+    ui->graphicsView->setSceneRect(rect);
 }

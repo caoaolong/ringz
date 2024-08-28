@@ -18,7 +18,12 @@ public:
 
 private:
     Ui::SqlDesignView *ui;
-    void initTheme();
+    // QWidget interface
+protected:
+    virtual void showEvent(QShowEvent *event) override;
+private slots:
+    void on_width_valueChanged(int w);
+    void on_height_valueChanged(int h);
 };
 
 #endif // SQLDESIGNVIEW_H

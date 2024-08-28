@@ -11,10 +11,10 @@ class Rz
 {
 public:
     Rz();
-    static QColor parseColor(QString colorValue);
     static bool parseBool(QString value);
     static QFont parseFont(QString fontValue);
     static QList<TableColumn> tableDesc(QSqlDatabase db, QString table);
+    static QString tokenColor(QString name);
 };
 
 #endif // RZ_H

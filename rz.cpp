@@ -1,16 +1,11 @@
 #include "rz.h"
+#include "ringz.h"
 #include <QSqlQuery>
 #include <QSqlRecord>
+#include <QJsonObject>
+#include <QJsonArray>
 
 Rz::Rz() {}
-
-QColor Rz::parseColor(QString color)
-{
-    int r = color.mid(1, 2).toInt(nullptr, 16);
-    int g = color.mid(3, 2).toInt(nullptr, 16);
-    int b = color.mid(5, 2).toInt(nullptr, 16);
-    return QColor(r, g, b);
-}
 
 bool Rz::parseBool(QString value)
 {
@@ -38,4 +33,16 @@ QList<TableColumn> Rz::tableDesc(QSqlDatabase db, QString table)
             query.value("Comment").toString()));
     }
     return r;
+}
+
+QString Rz::tokenColor(QString name)
+{
+    auto array = Ringz::getTheme("tokenColors").toArray();
+    for (auto item : array) {
+        auto o = item.toObject();
+        if (o["scope"] == name) {
+            return o["settings"].toObject()["foreground"].toString();
+        }
+    }
+    return "";
 }

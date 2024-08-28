@@ -34,7 +34,7 @@ void QueryResult::initTheme()
     // 设置背景前景色
     QPalette pallete = this->palette();
     auto colors = Ringz::getTheme("colors");
-    pallete.setColor(QPalette::Base, Rz::parseColor(colors["terminal.background"].toString()));
-    pallete.setColor(QPalette::Text, Rz::parseColor(colors["terminal.foreground"].toString()));
+    pallete.setColor(QPalette::Base, QColor(colors["terminal.background"].toString()));
+    pallete.setColor(QPalette::Text, QColor(colors["terminal.foreground"].toString()));
     this->setPalette(pallete);
 }

@@ -152,8 +152,8 @@ void CodeTextEdit::initTheme()
     // 设置背景前景色
     QPalette pallete = this->palette();
     auto colors = Ringz::getTheme("colors");
-    pallete.setColor(QPalette::Base, Rz::parseColor(colors["editor.background"].toString()));
-    pallete.setColor(QPalette::Text, Rz::parseColor(colors["editor.foreground"].toString()));
+    pallete.setColor(QPalette::Base, QColor(colors["editor.background"].toString()));
+    pallete.setColor(QPalette::Text, QColor(colors["editor.foreground"].toString()));
     this->setPalette(pallete);
     // rules.clear();
     // auto format = parseSyntaxFormat(hlPref["keyword"].toString());
@@ -169,7 +169,7 @@ QTextCharFormat CodeTextEdit::parseSyntaxFormat(QString value)
 {
     QTextCharFormat format;
     auto vs = value.split(",");
-    format.setForeground(QBrush(Rz::parseColor(vs[0])));
+    format.setForeground(QBrush(QColor(vs[0])));
     format.setFontWeight(Rz::parseBool(vs[1]) ? QFont::Bold : QFont::Normal);
     format.setFontItalic(Rz::parseBool(vs[2]));
     return format;

@@ -24,13 +24,15 @@ SOURCES += \
     queryresult.cpp \
     ringz.cpp \
     rz.cpp \
+    sqldesigneditor.cpp \
+    sqldesignscene.cpp \
     sqldesignview.cpp \
-    sqldesignwidget.cpp \
     structtable.cpp \
     syntaxhighlight.cpp \
     table.cpp \
     tablecolumn.cpp \
     tablekey.cpp \
+    tableline.cpp \
     tableview.cpp \
     texteditor.cpp
 
@@ -48,13 +50,15 @@ HEADERS += \
     queryresult.h \
     ringz.h \
     rz.h \
+    sqldesigneditor.h \
+    sqldesignscene.h \
     sqldesignview.h \
-    sqldesignwidget.h \
     structtable.h \
     syntaxhighlight.h \
     table.h \
     tablecolumn.h \
     tablekey.h \
+    tableline.h \
     tableview.h \
     texteditor.h
 

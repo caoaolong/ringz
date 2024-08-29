@@ -18,6 +18,9 @@
 #define RINGZ_THEME     "/themes/"
 #define RINGZ_DATA      "/data.json"
 
+#define LINE_HEIGHT 16
+#define ANCHOR_SIZE 8
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class Ringz;

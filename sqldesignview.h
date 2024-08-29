@@ -3,6 +3,8 @@
 
 #include <QWidget>
 #include <QSqlDatabase>
+#include <QGraphicsScene>
+#include "sqldesignscene.h"
 
 namespace Ui {
 class SqlDesignView;
@@ -18,12 +20,7 @@ public:
 
 private:
     Ui::SqlDesignView *ui;
-    // QWidget interface
-protected:
-    virtual void showEvent(QShowEvent *event) override;
-private slots:
-    void on_width_valueChanged(int w);
-    void on_height_valueChanged(int h);
+    SqlDesignScene *scene;
 };
 
 #endif // SQLDESIGNVIEW_H

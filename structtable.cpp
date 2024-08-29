@@ -17,11 +17,11 @@ StructTable::~StructTable()
     delete ui;
 }
 
-bool StructTable::showTable(QWidget *parent, QSqlDatabase db, QString table)
+bool StructTable::showTable(QWidget *parent, QSqlDatabase db, QString table, QStringList *selectedcolumns)
 {
     StructTable dialog(parent);
     QTableWidget *tw = dialog.ui->tableWidget;
-    tw->setColumnCount(2);
+    tw->setColumnCount(3);
     tw->setHorizontalHeaderLabels(QStringList("名称") << "类型" << "备注");
     // 查询表结构
     QList<TableColumn> columns = Rz::tableDesc(db, table);
@@ -37,7 +37,15 @@ bool StructTable::showTable(QWidget *parent, QSqlDatabase db, QString table)
         tw->setItem(i, 2, new QTableWidgetItem(item.getComment()));
     }
     tw->horizontalHeader()->setStretchLastSection(true);
-    return dialog.exec() == QDialog::Accepted;
+    bool result = dialog.exec() == QDialog::Accepted;
+    if (result) {
+        for (int i = 0; i < tw->rowCount(); i++) {
+            if (tw->item(i, 0)->checkState() == Qt::Checked) {
+                selectedcolumns->append(tw->item(i, 0)->text());
+            }
+        }
+    }
+    return result;
 }
 
 

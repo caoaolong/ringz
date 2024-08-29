@@ -143,15 +143,15 @@
     </layout>
    </item>
    <item>
-    <widget class="SqlDesignWidget" name="graphicsView"/>
+    <widget class="SqlDesignEditor" name="graphicsView"/>
    </item>
   </layout>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>SqlDesignWidget</class>
+   <class>SqlDesignEditor</class>
    <extends>QGraphicsView</extends>
-   <header location="global">sqldesignwidget.h</header>
+   <header location="global">sqldesigneditor.h</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -15,7 +15,7 @@ class StructTable : public QDialog
 public:
     explicit StructTable(QWidget *parent = nullptr);
     ~StructTable();
-    static bool showTable(QWidget *parent, QSqlDatabase db, QString table);
+    static bool showTable(QWidget *parent, QSqlDatabase db, QString table, QStringList *columns);
 
 private slots:
     void on_selectAll_clicked();

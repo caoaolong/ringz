@@ -4,7 +4,7 @@
 #include <QString>
 #include <QList>
 
-enum ItemType {
+enum ProjectItemType {
     Folder = 1001,
     SourceFolder,
     ResourceFolder,
@@ -16,18 +16,18 @@ enum ItemType {
 class ProjectItem
 {
 public:
-    ProjectItem(QString name, ItemType type = File);
+    ProjectItem(QString name, ProjectItemType type = File);
     QList<ProjectItem*> *getChildren() const;
 
     QString getName() const;
 
-    ItemType getType() const;
-    void setType(ItemType newType);
+    ProjectItemType getType() const;
+    void setType(ProjectItemType newType);
 
     void setName(const QString &newName);
 
 private:
-    ItemType type;
+    ProjectItemType type;
     QString name;
     QList<ProjectItem*>* children;
 };

@@ -1,6 +1,6 @@
 #include "projectitem.h"
 
-ProjectItem::ProjectItem(QString name, ItemType type)
+ProjectItem::ProjectItem(QString name, ProjectItemType type)
 {
     this->name = name;
     this->type = type;
@@ -17,12 +17,12 @@ QString ProjectItem::getName() const
     return name;
 }
 
-ItemType ProjectItem::getType() const
+ProjectItemType ProjectItem::getType() const
 {
     return type;
 }
 
-void ProjectItem::setType(ItemType newType)
+void ProjectItem::setType(ProjectItemType newType)
 {
     type = newType;
 }

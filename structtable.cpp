@@ -1,4 +1,5 @@
 #include "structtable.h"
+#include "sqldesignscene.h"
 #include "ui_structtable.h"
 #include "tablecolumn.h"
 #include "rz.h"
@@ -31,7 +32,12 @@ bool StructTable::showTable(QWidget *parent, QSqlDatabase db, QString table, QSt
         QTableWidgetItem *checkbox = new QTableWidgetItem(item.getName());
         checkbox->setFlags(checkbox->flags() | Qt::ItemIsUserCheckable);
         checkbox->setFlags(checkbox->flags() & ~Qt::ItemIsEditable);
-        checkbox->setCheckState(Qt::Checked);
+        if (selectedcolumns) {
+            if (selectedcolumns->contains(item.getName()))
+                checkbox->setCheckState(Qt::Checked);
+            else
+                checkbox->setCheckState(Qt::Unchecked);
+        }
         tw->setItem(i, 0, checkbox);
         tw->setItem(i, 1, new QTableWidgetItem(item.getType()));
         tw->setItem(i, 2, new QTableWidgetItem(item.getComment()));
@@ -39,6 +45,8 @@ bool StructTable::showTable(QWidget *parent, QSqlDatabase db, QString table, QSt
     tw->horizontalHeader()->setStretchLastSection(true);
     bool result = dialog.exec() == QDialog::Accepted;
     if (result) {
+        if (selectedcolumns)
+            selectedcolumns->clear();
         for (int i = 0; i < tw->rowCount(); i++) {
             if (tw->item(i, 0)->checkState() == Qt::Checked) {
                 selectedcolumns->append(tw->item(i, 0)->text());
@@ -47,7 +55,6 @@ bool StructTable::showTable(QWidget *parent, QSqlDatabase db, QString table, QSt
     }
     return result;
 }
-
 
 void StructTable::on_selectAll_clicked()
 {

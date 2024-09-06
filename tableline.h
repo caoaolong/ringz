@@ -1,14 +1,19 @@
 #ifndef TABLELINE_H
 #define TABLELINE_H
-#include <QGraphicsLineItem>
+#include <QGraphicsPathItem>
+#include <QPainterPath>
 
 class TableLine
 {
 public:
-    TableLine(QGraphicsLineItem *line);
+    TableLine(QGraphicsPathItem *line);
+    QGraphicsItem *getSource() { return from; };
+    QGraphicsItem *getTarget() { return to; };
+    QString getFromName() { return fromName; };
+    QString getToName() { return toName; };
     QGraphicsItemGroup *getFrom() { return from->group(); };
     QGraphicsItemGroup *getTo() { return to->group(); };
-    QGraphicsLineItem *getLine() const;
+    QGraphicsPathItem *getLine() const;
 
     void update();
     void updateFrom(QGraphicsItem *from);
@@ -17,7 +22,10 @@ public:
 private:
     QPointF start, stop;
     QGraphicsItem *from, *to;
-    QGraphicsLineItem *line;
+    QString fromName, toName;
+    QGraphicsPathItem *line;
+    QPainterPath path;
+    void draw(QPointF stop);
 };
 
 #endif // TABLELINE_H

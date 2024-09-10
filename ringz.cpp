@@ -2,6 +2,7 @@
 #include "rz.h"
 #include "ui_ringz.h"
 #include "sqldesignview.h"
+#include "buildmodel.h"
 #include "project.h"
 #include "datasource.h"
 #include "texteditor.h"
@@ -19,6 +20,10 @@ QJsonObject Ringz::preferences = QJsonObject();
 QJsonObject Ringz::data = QJsonObject();
 QJsonObject Ringz::theme = QJsonObject();
 
+QMap<QString, QString> Ringz::templates = QMap<QString, QString>();
+QMap<QString, QWidget*> Ringz::windows = QMap<QString, QWidget*>();
+QMap<QString, QMap<QString, QString>> Ringz::typeMappings = QMap<QString, QMap<QString, QString>>();
+
 Ringz::Ringz(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::Ringz)
@@ -28,6 +33,8 @@ Ringz::Ringz(QWidget *parent)
     this->loadPreferences();
     // 读取主题
     this->loadTheme();
+    // 加载模板
+    this->loadTemplates();
     // 加载右键菜单
     this->loadMenu();
     // 成员变量
@@ -80,6 +87,11 @@ QJsonValue Ringz::getTheme(QString key)
 QJsonValue Ringz::getData(QString key)
 {
     return data[key];
+}
+
+QString Ringz::getTemplate(QString key)
+{
+    return templates[key];
 }
 
 void Ringz::on_actionDbCreate_triggered()
@@ -140,10 +152,13 @@ void Ringz::createProject(ProjectInfo *info)
 {
     this->projects->append(info);
     QTreeWidgetItem *project = new QTreeWidgetItem(ProjectFolderItem);
-    project->setIcon(0, ProjectInfo::getIcon(info->getType()));
-    project->setText(0, info->getRoot()->getName());
+    project->setIcon(ColumnLabel, ProjectInfo::getIcon(info->getType()));
+    project->setText(ColumnLabel, info->getRoot()->getName());
+    project->setData(ColumnLabel, DataRole, info->getWorkspace());
+    if (info->getActive()) {
+        project->setForeground(ColumnLabel, Qt::green);
+    }
     ui->projectTree->addTopLevelItem(project);
-
     this->showProjectTree(project, info->getRoot());
 }
 
@@ -159,6 +174,14 @@ void Ringz::loadPreferences()
     QJsonDocument preferenceDoc = QJsonDocument::fromJson(preferencesData);
     if (preferenceDoc.isObject()) {
         this->preferences = preferenceDoc.object();
+    }
+    auto mapping = this->getPreference("mapping").toObject();
+    for (const auto &db : mapping.keys()) {
+        auto dbType = mapping[db].toObject();
+        QStringList entries;
+        for (const auto &type : dbType.keys()) {
+            entries.append(dbType[type].toString());
+        }
     }
     // 设置全局字体
     auto apperence = this->getPreference("apperence").toObject();
@@ -201,16 +224,32 @@ void Ringz::loadTheme()
     }
 }
 
+void Ringz::loadTemplates()
+{
+    QDir dir(QString(RINGZ_HOME).append(RINGZ_TEMPLATE));
+    QFileInfoList templates = dir.entryInfoList(QDir::NoDotAndDotDot);
+    for (const auto &tpl : templates) {
+        QFile file(tpl.filePath());
+        this->templates.insert(tpl.fileName(), QString::fromUtf8(file.readAll()));
+        file.close();
+    }
+}
+
 void Ringz::loadMenu()
 {
     // table menu
     QAction *structAction = new QAction(QIcon(":/ui/icons/struct.png"), "结构", this);
     connect(structAction, &QAction::triggered, this, &Ringz::createTableView);
     QAction *buildAction = new QAction(QIcon(":/ui/icons/build.png"), "构建", this);
+    connect(buildAction, &QAction::triggered, this, &Ringz::buildModel);
+    QAction *activeAction = new QAction(QIcon(":/ui/icons/active.png"), "激活", this);
+    connect(activeAction, &QAction::triggered, this, &Ringz::useProject);
+
     this->tableMenu.addAction(structAction);
     this->tableMenu.addAction(buildAction);
 
     this->projectMenu.addAction(structAction);
+    this->projectMenu.addAction(activeAction);
 }
 
 void Ringz::loadDatasource(QJsonArray connections)
@@ -226,7 +265,7 @@ void Ringz::loadProject(QJsonArray projects)
     for (auto item : projects) {
         auto entry = item.toObject();
         ProjectInfo *info = new ProjectInfo(entry["path"].toString());
-        info->setActive(Rz::parseBool(entry["active"].toString()));
+        info->setActive(entry["active"].toBool());
         if (info->getActive()) {
             this->activeProject = info;
         }
@@ -294,6 +333,32 @@ void Ringz::createDesignView()
     this->windows.insert(QString::number(QDateTime::currentMSecsSinceEpoch()), window);
     ui->mdiArea->addSubWindow(window);
     window->show();
+}
+
+void Ringz::useProject()
+{
+    auto project = ui->projectTree->selectedItems()[0];
+    if (activeProjectItem) {
+        activeProjectItem->setForeground(ColumnLabel, Qt::black);
+    }
+    this->activeProjectItem = project;
+    this->activeProjectItem->setForeground(ColumnLabel, Qt::green);
+
+    for (int i = 0; i < projects->length(); i++) {
+        if (projects->at(i)->getWorkspace() == project->data(ColumnLabel, DataRole)) {
+            this->activeProject = projects->at(i);
+            this->activeProject->setActive(true);
+            break;
+        }
+    }
+}
+
+void Ringz::buildModel()
+{
+    QTreeWidgetItem *item = ui->dbTree->selectedItems()[0];
+    if(BuildModel::showTable(this, this->activeConnection->get(), item->text(ColumnLabel), this->projects)) {
+        qDebug() << "build";
+    }
 }
 
 void Ringz::createDatasource(DatasourceInfo *info)

@@ -1,0 +1,21 @@
+{
+    "datasources": [
+        {
+            "type": "QMYSQL",
+            "host": "127.0.0.1",
+            "username": "root",
+            "password": "root1234",
+            "port": 6033,
+            "database": "glory_db",
+            "active": true,
+            "connect": true
+        }
+    ],
+    "projects": [
+        {
+            "path": "/Users/calong/Project/java/demo",
+            "type": "maven",
+            "active": true
+        }
+    ]
+}

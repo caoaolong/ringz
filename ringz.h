@@ -13,8 +13,9 @@
 #include <QMenu>
 #include <QMap>
 
-#define RINGZ_HOME      "/Users/calong/ringz"
+#define RINGZ_HOME      "/Users/calong/Project/Calong/ringz/ringz"
 #define RINGZ_CONFIG    "/config.json"
+#define RINGZ_TEMPLATE  "/templates"
 #define RINGZ_THEME     "/themes/"
 #define RINGZ_DATA      "/data.json"
 
@@ -60,6 +61,7 @@ public:
     static QJsonValue getPreference(QString key);
     static QJsonValue getTheme(QString key);
     static QJsonValue getData(QString key);
+    static QString getTemplate(QString key);
 private slots:
     void on_actionDbCreate_triggered();
 
@@ -90,6 +92,7 @@ private:
     void loadPreferences();
     void loadUserData();
     void loadTheme();
+    void loadTemplates();
     void loadMenu();
     void loadDatasource(QJsonArray connections);
     void loadProject(QJsonArray projects);
@@ -100,12 +103,15 @@ private:
     void createDataView(QTreeWidgetItem *item, int column);
     void createTableView();
     void createDesignView();
+    void useProject();
+    void buildModel();
 private:
     Ui::Ringz *ui;
     QList<DatabaseConnection*> *connections;
     QList<ProjectInfo*> *projects;
     DatabaseConnection* activeConnection;
     ProjectInfo* activeProject;
+    QTreeWidgetItem *activeProjectItem;
     // Menus
     QMenu tableMenu;
     QMenu databaseMenu;
@@ -125,6 +131,8 @@ private:
     static QJsonObject preferences;
     static QJsonObject data;
     static QJsonObject theme;
-    QMap<QString, QWidget*> windows;
+    static QMap<QString, QWidget*> windows;
+    static QMap<QString, QString> templates;
+    static QMap<QString, QMap<QString, QString>> typeMappings;
 };
 #endif // RINGZ_H

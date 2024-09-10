@@ -17,6 +17,7 @@ QString EntryList::show(QStringList list)
     EntryList dialog;
     foreach(auto item, list)
         dialog.ui->listWidget->addItem(item);
+    dialog.ui->listWidget->setCurrentRow(0);
     if(dialog.exec() == QDialog::Accepted) {
         QList<QListWidgetItem*> selectedItems = dialog.ui->listWidget->selectedItems();
         if (selectedItems.count() > 0) {

@@ -4,6 +4,14 @@
 #include <QSqlRecord>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QRegularExpression>
+
+QStringList Rz::javaTypeMap =
+    QStringList(J_BOOL) << J_BYTE << J_SHORT << J_INT << J_LONG << J_STRING << J_FLOAT << J_DOUBLE << J_DATE << J_CHAR;
+
+QStringList Rz::golangTypeMap =
+    QStringList(G_BOOL) << G_BYTE << G_SHORT << G_INT << G_LONG << G_STRING << G_FLOAT << G_DOUBLE << G_DATE << G_CHAR;
+
 
 Rz::Rz() {}
 
@@ -46,3 +54,30 @@ QString Rz::tokenColor(QString name)
     }
     return "";
 }
+
+QStringList Rz::languageMapping(QString type)
+{
+    if (type == LANG_GOLANG) {
+        return golangTypeMap;
+    } else if (type == LANG_JAVA) {
+        return javaTypeMap;
+    } else {
+        return QStringList();
+    }
+}
+
+QString Rz::mapType(QString dbType, QString language, QString dataType)
+{
+    auto mapping = Ringz::getPreference("mapping").toObject();
+    if (dbType == "QMYSQL") {
+        QJsonObject mv = mapping[DB_MYSQL].toObject();
+        auto types = mv[dataType].toString().split(";");
+        for (auto type : types) {
+            if (type.startsWith(language)) {
+                return type.split(":")[1];
+            }
+        }
+    }
+    return "";
+}
+

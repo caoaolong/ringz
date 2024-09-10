@@ -1,0 +1,26 @@
+{
+	"apperence": {
+		"theme": "OneDark Pro",
+		"font": "Arial Unicode MS,14,false,false"
+	},
+	"editor": {
+		"font": "Courier New,20,true,false",
+		"lineHeight": 36
+	},
+	"mapping": {
+		"MySQL": {
+			"varchar": "Java:String;Golang:string",
+			"tinyint": "Java:int;Golang:int32",
+			"smallint": "Java:int;Golang:int32",
+			"mediumint": "Java:int;Golang:int32",
+			"int": "Java:int;Golang:int32",
+			"bigint": "Java:long;Golang:int64",
+			"date": "Java:Date;Golang:time.Time",
+			"time": "Java:Date;Golang:time.Time",
+			"datetime": "Java:Date;Golang:time.Time",
+			"timestamp": "Java:Date;Golang:time.Time",
+			"decimal": "Java:double;Golang:float64",
+			"float": "Java:float;Golang:float32"
+		}
+	}
+}

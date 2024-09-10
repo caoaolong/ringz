@@ -10,6 +10,8 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    buildinfo.cpp \
+    buildmodel.cpp \
     codetextedit.cpp \
     databaseconnection.cpp \
     datasource.cpp \
@@ -37,6 +39,8 @@ SOURCES += \
     texteditor.cpp
 
 HEADERS += \
+    buildinfo.h \
+    buildmodel.h \
     codetextedit.h \
     databaseconnection.h \
     datasource.h \
@@ -63,6 +67,7 @@ HEADERS += \
     texteditor.h
 
 FORMS += \
+    buildmodel.ui \
     datasource.ui \
     dataview.ui \
     entrylist.ui \

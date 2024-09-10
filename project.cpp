@@ -1,4 +1,5 @@
 #include "project.h"
+#include "rz.h"
 #include "ui_project.h"
 #include <QDir>
 
@@ -38,9 +39,19 @@ ProjectItem *ProjectInfo::getRoot() const
     return root;
 }
 
-ProjectInfo::ProjectType ProjectInfo::getType() const
+ProjectType ProjectInfo::getType() const
 {
     return type;
+}
+
+QString ProjectInfo::getLanguage()
+{
+    switch(type) {
+    case MavenProject:
+        return LANG_JAVA;
+    default:
+        return "";
+    }
 }
 
 QIcon ProjectInfo::getIcon(ProjectType type)
@@ -51,6 +62,11 @@ QIcon ProjectInfo::getIcon(ProjectType type)
     default:
         return QIcon(":/ui/icons/folder.png");
     }
+}
+
+QIcon ProjectInfo::getIcon()
+{
+    return getIcon(this->type);
 }
 
 bool ProjectInfo::getActive() const

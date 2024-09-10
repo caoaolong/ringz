@@ -1,5 +1,6 @@
 #include "sqldesignscene.h"
 #include "ringz.h"
+#include "entrylist.h"
 #include "structtable.h"
 #include <QMimeData>
 #include <QGraphicsItem>
@@ -240,7 +241,7 @@ void SqlDesignScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
             switch (type) {
             case ItemAnchor:
                 // 创建条件
-
+                EntryList::show(QStringList("Where") << "GroupBy" << "Pagination");
                 break;
             }
         } else {

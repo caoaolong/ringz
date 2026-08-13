@@ -21,14 +21,14 @@ interface TimelineProps {
 }
 
 export function Timeline(props: TimelineProps) {
-  const rulerRef = useRef<HTMLDivElement>(null)
+  const trackColRef = useRef<HTMLDivElement>(null)
   const [dragging, setDragging] = useState(false)
 
   const calcTime = useCallback(
     (clientX: number) => {
-      const ruler = rulerRef.current
-      if (!ruler) return 0
-      const rect = ruler.getBoundingClientRect()
+      const trackCol = trackColRef.current
+      if (!trackCol) return 0
+      const rect = trackCol.getBoundingClientRect()
       const x = Math.max(0, Math.min(rect.width, clientX - rect.left))
       return (x / rect.width) * props.duration
     },
@@ -111,13 +111,13 @@ export function Timeline(props: TimelineProps) {
       {/* Timeline body */}
       <div className="timeline-body">
         {/* Ruler */}
-        <div
-          className="timeline-ruler-row"
-          ref={rulerRef}
-          onClick={(e) => props.onSeek(calcTime(e.clientX))}
-        >
+        <div className="timeline-ruler-row">
           <div className="ruler-label-col">时间轴</div>
-          <div className="ruler-track-col">
+          <div
+            className="ruler-track-col"
+            ref={trackColRef}
+            onClick={(e) => props.onSeek(calcTime(e.clientX))}
+          >
             <div className="timeline-ruler">
               {markers.map((t) => (
                 <div

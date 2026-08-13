@@ -17,6 +17,13 @@ interface ToolbarProps {
   isPlaying: boolean
   hasSelection: boolean
   hasElements: boolean
+  onUndo: () => void
+  onRedo: () => void
+  canUndo: boolean
+  canRedo: boolean
+  onCopy: () => void
+  onCut: () => void
+  onPaste: () => void
 }
 
 export function Toolbar(props: ToolbarProps) {
@@ -32,9 +39,8 @@ export function Toolbar(props: ToolbarProps) {
       <div className="toolbar-divider" />
 
       <div className="toolbar-group">
-        <button className="tb-btn primary" onClick={() => fileInputRef.current?.click()}>
-          <span className="tb-icon">📂</span>
-          <span>导入SVG</span>
+        <button className="tb-btn icon-only primary" onClick={() => fileInputRef.current?.click()} title="导入 SVG">
+          📂
         </button>
         <input
           ref={fileInputRef}
@@ -69,9 +75,58 @@ export function Toolbar(props: ToolbarProps) {
       <div className="toolbar-group">
         <button
           className="tb-btn icon-only"
+          disabled={!props.canUndo}
+          onClick={props.onUndo}
+          title="撤销 (Ctrl+Z)"
+        >
+          ↶
+        </button>
+        <button
+          className="tb-btn icon-only"
+          disabled={!props.canRedo}
+          onClick={props.onRedo}
+          title="恢复 (Ctrl+Shift+Z)"
+        >
+          ↷
+        </button>
+      </div>
+
+      <div className="toolbar-divider" />
+
+      <div className="toolbar-group">
+        <button
+          className="tb-btn icon-only"
+          disabled={!props.hasSelection}
+          onClick={props.onCopy}
+          title="复制 (Ctrl+C)"
+        >
+          ⧉
+        </button>
+        <button
+          className="tb-btn icon-only"
+          disabled={!props.hasSelection}
+          onClick={props.onCut}
+          title="剪切 (Ctrl+X)"
+        >
+          ✂
+        </button>
+        <button
+          className="tb-btn icon-only"
+          onClick={props.onPaste}
+          title="粘贴 (Ctrl+V)"
+        >
+          📋
+        </button>
+      </div>
+
+      <div className="toolbar-divider" />
+
+      <div className="toolbar-group">
+        <button
+          className="tb-btn icon-only"
           disabled={!props.hasSelection}
           onClick={props.onDuplicate}
-          title="复制 (Ctrl+D)"
+          title="克隆 (Ctrl+D)"
         >
           ⧉
         </button>

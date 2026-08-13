@@ -8,7 +8,6 @@ import { LayerPanel } from './components/LayerPanel'
 import { PropertyPanel } from './components/PropertyPanel'
 import { Timeline } from './components/Timeline'
 import { ResizeHandle } from './components/ResizeHandle'
-import { SAMPLE_SVG } from './utils/sampleSVG'
 import './App.css'
 
 export default function App() {
@@ -28,18 +27,53 @@ export default function App() {
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
 
       const ed = editorRef.current
+      const ctrl = e.ctrlKey || e.metaKey
+
+      // Ctrl/Cmd combined shortcuts
+      if (ctrl) {
+        switch (e.key.toLowerCase()) {
+          case 'c':
+            e.preventDefault()
+            ed.copySelected()
+            break
+          case 'v':
+            e.preventDefault()
+            ed.paste()
+            break
+          case 'x':
+            e.preventDefault()
+            ed.cutSelected()
+            break
+          case 'z':
+            e.preventDefault()
+            if (e.shiftKey) {
+              ed.redo()
+            } else {
+              ed.undo()
+            }
+            break
+          case 'y':
+            e.preventDefault()
+            ed.redo()
+            break
+          case 'd':
+            e.preventDefault()
+            ed.duplicateSelected()
+            break
+        }
+        return
+      }
+
+      // Non-modifier shortcuts
       switch (e.key) {
         case 'Delete':
         case 'Backspace':
           e.preventDefault()
           ed.deleteSelected()
           break
-        case 'd':
-        case 'D':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault()
-            ed.duplicateSelected()
-          }
+        case 'Escape':
+          e.preventDefault()
+          ed.deselectAll()
           break
         case ' ':
           e.preventDefault()
@@ -58,10 +92,6 @@ export default function App() {
 
   const hasElements = editor.layers.length > 0
 
-  const loadSample = () => {
-    editor.importSVGString(SAMPLE_SVG)
-  }
-
   return (
     <div className="editor-app">
       <Toolbar
@@ -78,6 +108,13 @@ export default function App() {
         isPlaying={editor.isPlaying}
         hasSelection={!!editor.selectedId}
         hasElements={hasElements}
+        onUndo={editor.undo}
+        onRedo={editor.redo}
+        canUndo={editor.canUndo}
+        canRedo={editor.canRedo}
+        onCopy={editor.copySelected}
+        onCut={editor.cutSelected}
+        onPaste={editor.paste}
       />
       <div className="main-content">
         <LayerPanel
@@ -100,7 +137,7 @@ export default function App() {
           containerRef={editor.containerRef}
           isReady={editor.isReady}
           isEmpty={!hasElements}
-          onLoadSample={loadSample}
+          onImportSVG={editor.importSVGFile}
         />
         <ResizeHandle
           orientation="horizontal"

@@ -22,6 +22,8 @@ import type {
   ElementProps,
   AnimationTrack,
   Keyframe,
+  ElementSnapshot,
+  EditorSnapshot,
 } from '../types'
 
 /** Extract editable properties from a Leafer element */
@@ -58,12 +60,14 @@ function trackElement(el: IUI, map: Map<string, IUI>): void {
 }
 
 /** Recursively build a flat layer list with depth info */
-function buildLayerList(elements: IUI[], depth: number): LayerInfo[] {
+function buildLayerList(elements: IUI[], depth: number, parentId: string | null = null): LayerInfo[] {
   const layers: LayerInfo[] = []
   const arr = elements as IUI[]
   for (let i = arr.length - 1; i >= 0; i--) {
     const el = arr[i]
     const id = String(el.id || el.innerId)
+    const children = (el as any).children as IUI[] | undefined
+    const hasChildren = !!(children && children.length > 0)
     layers.push({
       id,
       name: (el as any).name || el.tag || 'Element',
@@ -72,13 +76,63 @@ function buildLayerList(elements: IUI[], depth: number): LayerInfo[] {
       locked: (el as any).locked === true,
       opacity: el.opacity ?? 1,
       depth,
+      parentId,
+      hasChildren,
     })
-    const children = (el as any).children as IUI[] | undefined
-    if (children && children.length > 0) {
-      layers.push(...buildLayerList(children, depth + 1))
+    if (hasChildren) {
+      layers.push(...buildLayerList(children, depth + 1, id))
     }
   }
   return layers
+}
+
+/** Serialize a Leafer element to a plain snapshot */
+function serializeElement(el: IUI): ElementSnapshot {
+  const tag = el.tag || 'UI'
+  const id = String(el.id || el.innerId)
+  const snap: ElementSnapshot = {
+    id,
+    tag,
+    name: (el as any).name || tag,
+    props: extractProps(el),
+    visible: el.visible !== false,
+    locked: (el as any).locked === true,
+  }
+  if (tag === 'Path') snap.path = (el as any).path
+  if (tag === 'Text') {
+    snap.text = (el as any).text
+    snap.fontSize = (el as any).fontSize
+  }
+  if (tag === 'Star') snap.corners = (el as any).corners
+  return snap
+}
+
+/** Recreate a Leafer element from a snapshot */
+function createElementFromSnapshot(snap: ElementSnapshot): IUI {
+  const { tag, props, name } = snap
+  const base = { ...props, editable: true, name }
+  let element: IUI
+  switch (tag) {
+    case 'Ellipse':
+      element = new Ellipse(base)
+      break
+    case 'Star':
+      element = new Star({ ...base, corners: snap.corners ?? 5 } as any)
+      break
+    case 'Path':
+      element = new Path({ ...base, path: snap.path || 'M 0 0 L 50 0 L 25 50 Z' } as any)
+      break
+    case 'Text':
+      element = new Text({ ...base, text: snap.text || '', fontSize: snap.fontSize ?? 32 } as any)
+      break
+    default:
+      element = new Rect(base)
+  }
+  ;(element as any).id = snap.id
+  element.visible = snap.visible
+  ;(element as any).locked = snap.locked
+  ;(element as any).hittable = !snap.locked
+  return element
 }
 
 export function useEditor() {
@@ -96,6 +150,25 @@ export function useEditor() {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDurationState] = useState(5)
   const [isPlaying, setIsPlaying] = useState(false)
+
+  // ===== History (undo/redo) =====
+  const historyRef = useRef<EditorSnapshot[]>([])
+  const historyIndexRef = useRef(-1)
+  const isRestoringRef = useRef(false)
+  const historyDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
+
+  // ===== Clipboard =====
+  const clipboardRef = useRef<ElementSnapshot | null>(null)
+
+  // ===== Refs mirroring state for use in stable callbacks =====
+  const tracksRef = useRef<Map<string, AnimationTrack>>(new Map())
+  const selectedIdRef = useRef<string | null>(null)
+  const pushHistoryDebouncedRef = useRef<(() => void) | null>(null)
+  const pushHistoryRef = useRef<(() => void) | null>(null)
+  tracksRef.current = tracks
+  selectedIdRef.current = selectedId
 
   // ===== Initialize Leafer App =====
   useEffect(() => {
@@ -122,15 +195,99 @@ export function useEditor() {
     // Set up editor event listeners
     const editor = (app as any).editor
 
+    // ===== Hierarchical (drill-down) selection =====
+    // Single click selects the top-level parent; double-click drills into children.
+    let isOverriding = false // re-entry guard for editor.select override
+    let isDrilling = false    // set by dblclick to allow deeper selection
+
+    /** Walk up parent chain to find the direct child of tree */
+    const findTopLevelParent = (el: any): any => {
+      let current = el
+      while (current?.parent && current.parent !== tree) {
+        current = current.parent
+      }
+      return current
+    }
+
+    /** Check if a world-space point is inside an element's world bounds */
+    const containsPoint = (el: any, wx: number, wy: number): boolean => {
+      const b = el.worldBounds || el.boxBounds
+      if (!b) return false
+      return wx >= b.x && wx <= b.x + b.width && wy >= b.y && wy <= b.y + b.height
+    }
+
     editor.on('editor.select', () => {
+      // If drilling (from dblclick), allow the selection as-is
+      if (isDrilling) {
+        isDrilling = false
+        const element = editor.element
+        if (element) {
+          const id = String(element.id || element.innerId)
+          setSelectedId(id)
+          setSelectedProps(extractProps(element))
+        } else {
+          setSelectedId(null)
+          setSelectedProps(null)
+        }
+        return
+      }
+
+      // If this is from our own override call, just sync state
+      if (isOverriding) {
+        isOverriding = false
+        const element = editor.element
+        if (element) {
+          const id = String(element.id || element.innerId)
+          setSelectedId(id)
+          setSelectedProps(extractProps(element))
+        } else {
+          setSelectedId(null)
+          setSelectedProps(null)
+        }
+        return
+      }
+
       const element = editor.element
-      if (element) {
+      if (!element) {
+        setSelectedId(null)
+        setSelectedProps(null)
+        return
+      }
+
+      // Override: select the top-level parent instead of the deep child
+      const topLevel = findTopLevelParent(element)
+      if (topLevel && topLevel !== element) {
+        isOverriding = true
+        editor.select(topLevel)
+      } else {
         const id = String(element.id || element.innerId)
         setSelectedId(id)
         setSelectedProps(extractProps(element))
-      } else {
-        setSelectedId(null)
-        setSelectedProps(null)
+      }
+    })
+
+    // Double-click: drill into the child at the click point
+    containerRef.current!.addEventListener('dblclick', (e: MouseEvent) => {
+      const element = editor.element
+      if (!element) return
+
+      const children = (element as any).children as any[]
+      if (!children || children.length === 0) return
+
+      // Convert screen coords to world coords
+      const rect = containerRef.current!.getBoundingClientRect()
+      const mx = e.clientX - rect.left
+      const my = e.clientY - rect.top
+      const wx = (mx - (tree.x ?? 0)) / (tree.scaleX ?? 1)
+      const wy = (my - (tree.y ?? 0)) / (tree.scaleY ?? 1)
+
+      // Find topmost child containing the point
+      for (let i = children.length - 1; i >= 0; i--) {
+        if (containsPoint(children[i], wx, wy)) {
+          isDrilling = true
+          editor.select(children[i])
+          break
+        }
       }
     })
 
@@ -144,16 +301,117 @@ export function useEditor() {
           setSelectedProps(extractProps(element))
         }
       })
+      // Debounced history push for canvas interactions (drag, resize, rotate)
+      if (!isRestoringRef.current) {
+        pushHistoryDebouncedRef.current?.()
+      }
     })
 
     // Create animation player
     playerRef.current = new AnimationPlayer((id) => elementMap.current.get(id))
     playerRef.current.setOnTimeUpdate(setCurrentTime)
 
+    // ===== Wheel zoom around mouse position =====
+    const container = containerRef.current!
+
+    // Force editor selection box to follow tree transform changes
+    const syncEditor = () => {
+      if (editor && editor.element) {
+        editor.update()
+      }
+    }
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const tree = (app as any).tree
+      if (!tree) return
+
+      const rect = container.getBoundingClientRect()
+      const mouseX = e.clientX - rect.left
+      const mouseY = e.clientY - rect.top
+
+      const oldScale = tree.scaleX ?? 1
+      const factor = e.deltaY > 0 ? 0.9 : 1.1
+      const newScale = Math.max(0.05, Math.min(20, oldScale * factor))
+
+      if (Math.abs(newScale - oldScale) < 0.001) return
+
+      // World coordinates of mouse before zoom
+      const worldX = (mouseX - (tree.x ?? 0)) / oldScale
+      const worldY = (mouseY - (tree.y ?? 0)) / oldScale
+
+      // Apply new scale
+      tree.scaleX = newScale
+      tree.scaleY = newScale
+
+      // Adjust position to keep mouse point stable
+      tree.x = mouseX - worldX * newScale
+      tree.y = mouseY - worldY * newScale
+
+      syncEditor()
+      if (!isRestoringRef.current) {
+        pushHistoryDebouncedRef.current?.()
+      }
+    }
+    container.addEventListener('wheel', onWheel, { passive: false })
+
+    // ===== Middle mouse button drag to pan =====
+    let panning = false
+    let panStartX = 0
+    let panStartY = 0
+    let panOriginX = 0
+    let panOriginY = 0
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 1) return // middle button only
+      e.preventDefault()
+      const tree = (app as any).tree
+      if (!tree) return
+      panning = true
+      panStartX = e.clientX
+      panStartY = e.clientY
+      panOriginX = tree.x ?? 0
+      panOriginY = tree.y ?? 0
+      container.style.cursor = 'grabbing'
+    }
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!panning) return
+      const tree = (app as any).tree
+      if (!tree) return
+      tree.x = panOriginX + (e.clientX - panStartX)
+      tree.y = panOriginY + (e.clientY - panStartY)
+      syncEditor()
+    }
+
+    const onMouseUp = () => {
+      if (!panning) return
+      panning = false
+      container.style.cursor = ''
+      if (!isRestoringRef.current) {
+        pushHistoryRef.current?.()
+      }
+    }
+
+    container.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+
+    // Prevent middle-click auto-scroll cursor
+    const onAuxClick = (e: MouseEvent) => {
+      if (e.button === 1) e.preventDefault()
+    }
+    container.addEventListener('auxclick', onAuxClick)
+
     setIsReady(true)
     refreshLayers()
 
     return () => {
+      container.removeEventListener('wheel', onWheel)
+      container.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+      container.removeEventListener('auxclick', onAuxClick)
       playerRef.current?.pause()
       app.destroy()
       appRef.current = null
@@ -181,6 +439,154 @@ export function useEditor() {
     setLayers(buildLayerList(children, 0))
   }, [])
 
+  // ===== History: Take snapshot of current state =====
+  const takeSnapshot = useCallback((): EditorSnapshot => {
+    const app = appRef.current as any
+    if (!app) return { elements: [], tracks: [], selectedId: null }
+    const children = (app.tree?.children as IUI[]) || []
+    const elements = children.map((el) => serializeElement(el))
+    const tracksArr = Array.from(tracksRef.current.entries()) as [string, AnimationTrack][]
+    const tree = app.tree
+    const viewport = tree
+      ? { x: tree.x ?? 0, y: tree.y ?? 0, scaleX: tree.scaleX ?? 1, scaleY: tree.scaleY ?? 1 }
+      : undefined
+    return {
+      elements,
+      tracks: tracksArr,
+      selectedId: selectedIdRef.current,
+      viewport,
+    }
+  }, [])
+
+  // ===== History: Restore a snapshot =====
+  const restoreSnapshot = useCallback(
+    (snap: EditorSnapshot) => {
+      const app = appRef.current as any
+      if (!app) return
+      isRestoringRef.current = true
+
+      // Clear existing elements
+      const tree = app.tree
+      if (tree) {
+        const existing = [...(tree.children as IUI[])]
+        for (const child of existing) child.remove()
+      }
+      elementMap.current.clear()
+
+      // Recreate elements
+      for (const snap_el of snap.elements) {
+        const el = createElementFromSnapshot(snap_el)
+        tree.add(el)
+        elementMap.current.set(snap_el.id, el)
+      }
+
+      // Restore tracks
+      const newTracks = new Map<string, AnimationTrack>()
+      for (const [id, track] of snap.tracks) {
+        newTracks.set(id, track)
+      }
+      setTracks(newTracks)
+
+      // Restore selection
+      if (snap.selectedId) {
+        const el = elementMap.current.get(snap.selectedId)
+        if (el) {
+          app.editor?.select(el)
+          setSelectedId(snap.selectedId)
+          setSelectedProps(extractProps(el))
+        } else {
+          app.editor?.select(null)
+          setSelectedId(null)
+          setSelectedProps(null)
+        }
+      } else {
+        app.editor?.select(null)
+        setSelectedId(null)
+        setSelectedProps(null)
+      }
+
+      // Restore viewport (pan/zoom)
+      if (snap.viewport && app.tree) {
+        app.tree.x = snap.viewport.x
+        app.tree.y = snap.viewport.y
+        app.tree.scaleX = snap.viewport.scaleX
+        app.tree.scaleY = snap.viewport.scaleY
+        if (app.editor?.element) {
+          app.editor.update()
+        }
+      }
+
+      refreshLayers()
+      isRestoringRef.current = false
+    },
+    [refreshLayers],
+  )
+
+  // ===== History: Update canUndo/canRedo flags =====
+  const updateCanUndoRedo = useCallback(() => {
+    setCanUndo(historyIndexRef.current > 0)
+    setCanRedo(historyIndexRef.current < historyRef.current.length - 1)
+  }, [])
+
+  // ===== History: Push current state (immediate) =====
+  const pushHistory = useCallback(() => {
+    if (isRestoringRef.current) return
+    // Clear pending debounce
+    if (historyDebounceRef.current) {
+      clearTimeout(historyDebounceRef.current)
+      historyDebounceRef.current = null
+    }
+    const snap = takeSnapshot()
+    const history = historyRef.current
+    // Truncate redo entries
+    history.length = historyIndexRef.current + 1
+    history.push(snap)
+    // Cap at 50 entries
+    if (history.length > 50) {
+      history.shift()
+    } else {
+      historyIndexRef.current++
+    }
+    updateCanUndoRedo()
+  }, [takeSnapshot, updateCanUndoRedo])
+
+  // ===== History: Push with debounce (for property edits & canvas drags) =====
+  const pushHistoryDebounced = useCallback(() => {
+    if (isRestoringRef.current) return
+    if (historyDebounceRef.current) {
+      clearTimeout(historyDebounceRef.current)
+    }
+    historyDebounceRef.current = setTimeout(() => {
+      historyDebounceRef.current = null
+      pushHistory()
+    }, 600)
+  }, [pushHistory])
+  pushHistoryDebouncedRef.current = pushHistoryDebounced
+  pushHistoryRef.current = pushHistory
+
+  // ===== History: Undo =====
+  const undo = useCallback(() => {
+    if (historyIndexRef.current <= 0) return
+    historyIndexRef.current--
+    restoreSnapshot(historyRef.current[historyIndexRef.current])
+    updateCanUndoRedo()
+  }, [restoreSnapshot, updateCanUndoRedo])
+
+  // ===== History: Redo =====
+  const redo = useCallback(() => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return
+    historyIndexRef.current++
+    restoreSnapshot(historyRef.current[historyIndexRef.current])
+    updateCanUndoRedo()
+  }, [restoreSnapshot, updateCanUndoRedo])
+
+  // ===== Push initial empty-state snapshot once editor is ready =====
+  useEffect(() => {
+    if (isReady && historyRef.current.length === 0) {
+      pushHistory()
+    }
+  }, [isReady, pushHistory])
+
   // ===== Helper: Get canvas center =====
   const getCanvasCenter = useCallback(() => {
     const app = appRef.current as any
@@ -193,36 +599,29 @@ export function useEditor() {
   // ===== SVG Import =====
   const importSVGFile = useCallback(async (file: File) => {
     const text = await file.text()
-    await importSVGString(text)
+    const name = file.name.replace(/\.svg$/i, '') || 'SVG'
+    await importSVGString(text, name)
   }, [])
 
   const importSVGString = useCallback(
-    async (svgString: string) => {
+    async (svgString: string, name?: string) => {
       const app = appRef.current as any
       if (!app) return
 
+      pushHistory()
       const { group } = parseSVG(svgString)
 
-      // Add each direct child to canvas for flat editing
-      const children = (group.children as IUI[]) || []
-      const toAdd = [...children]
-
-      for (const child of toAdd) {
-        child.remove()
-        ;(child as any).set({ editable: true })
-        app.tree.add(child)
-        trackElement(child, elementMap.current)
-      }
-
-      // If no children (single element), add the group itself
-      if (toAdd.length === 0) {
-        app.tree.add(group)
-        trackElement(group, elementMap.current)
-      }
+      // Add the entire group as a single wrapped node
+      const id = generateElementId()
+      ;(group as any).id = id
+      ;(group as any).name = name || 'SVG'
+      ;(group as any).set({ editable: true })
+      app.tree.add(group)
+      trackElement(group, elementMap.current)
 
       refreshLayers()
     },
-    [refreshLayers],
+    [refreshLayers, pushHistory],
   )
 
   // ===== Add Shape =====
@@ -231,6 +630,7 @@ export function useEditor() {
       const app = appRef.current as any
       if (!app) return
 
+      pushHistory()
       const center = getCanvasCenter()
       let element: IUI
 
@@ -315,7 +715,7 @@ export function useEditor() {
       // Select the new element
       app.editor?.select(element)
     },
-    [getCanvasCenter, refreshLayers],
+    [getCanvasCenter, refreshLayers, pushHistory],
   )
 
   // ===== Delete Selected =====
@@ -325,6 +725,7 @@ export function useEditor() {
     const element = app.editor?.element
     if (!element) return
 
+    pushHistory()
     const id = String(element.id || element.innerId)
 
     // Remove from map
@@ -344,7 +745,7 @@ export function useEditor() {
     setSelectedId(null)
     setSelectedProps(null)
     refreshLayers()
-  }, [refreshLayers])
+  }, [refreshLayers, pushHistory])
 
   // ===== Duplicate Selected =====
   const duplicateSelected = useCallback(() => {
@@ -353,6 +754,7 @@ export function useEditor() {
     const element = app.editor?.element
     if (!element) return
 
+    pushHistory()
     const clone = element.clone()
     clone.move(20, 20)
     const id = generateElementId()
@@ -362,7 +764,7 @@ export function useEditor() {
     elementMap.current.set(id, clone)
     refreshLayers()
     app.editor?.select(clone)
-  }, [refreshLayers])
+  }, [refreshLayers, pushHistory])
 
   // ===== Clear Canvas =====
   const clearCanvas = useCallback(() => {
@@ -371,6 +773,7 @@ export function useEditor() {
     const tree = app.tree
     if (!tree) return
 
+    pushHistory()
     const children = [...(tree.children as IUI[])]
     for (const child of children) {
       child.remove()
@@ -380,7 +783,7 @@ export function useEditor() {
     setSelectedId(null)
     setSelectedProps(null)
     refreshLayers()
-  }, [refreshLayers])
+  }, [refreshLayers, pushHistory])
 
   // ===== Select Element =====
   const selectElement = useCallback((id: string) => {
@@ -428,8 +831,9 @@ export function useEditor() {
 
       // Update selected props without triggering editor.update loop
       setSelectedProps((prev) => (prev ? { ...prev, [prop]: value } : null))
+      pushHistoryDebounced()
     },
-    [],
+    [pushHistoryDebounced],
   )
 
   // ===== Toggle Layer Visibility =====
@@ -473,6 +877,7 @@ export function useEditor() {
     const element = app.editor?.element
     if (!element) return
 
+    pushHistory()
     const id = String(element.id || element.innerId)
 
     const keyframe: Keyframe = {
@@ -508,10 +913,11 @@ export function useEditor() {
       }
       return next
     })
-  }, [currentTime])
+  }, [currentTime, pushHistory])
 
   // ===== Animation: Remove Keyframe =====
   const removeKeyframe = useCallback((elementId: string, keyframeId: string) => {
+    pushHistory()
     setTracks((prev) => {
       const next = new Map(prev)
       const track = next.get(elementId)
@@ -525,7 +931,7 @@ export function useEditor() {
       }
       return next
     })
-  }, [])
+  }, [pushHistory])
 
   // ===== Animation: Play =====
   const playAnimation = useCallback(() => {
@@ -592,6 +998,49 @@ export function useEditor() {
     }
   }, [])
 
+  // ===== Clipboard: Copy Selected =====
+  const copySelected = useCallback(() => {
+    const app = appRef.current as any
+    if (!app) return
+    const element = app.editor?.element
+    if (!element) return
+    clipboardRef.current = serializeElement(element)
+  }, [])
+
+  // ===== Clipboard: Cut Selected =====
+  const cutSelected = useCallback(() => {
+    const app = appRef.current as any
+    if (!app) return
+    const element = app.editor?.element
+    if (!element) return
+    clipboardRef.current = serializeElement(element)
+    deleteSelected()
+  }, [deleteSelected])
+
+  // ===== Clipboard: Paste =====
+  const paste = useCallback(() => {
+    const app = appRef.current as any
+    if (!app || !clipboardRef.current) return
+
+    pushHistory()
+    const snap = clipboardRef.current
+    const newId = generateElementId()
+    const newSnap: ElementSnapshot = {
+      ...snap,
+      id: newId,
+      props: {
+        ...snap.props,
+        x: snap.props.x + 20,
+        y: snap.props.y + 20,
+      },
+    }
+    const el = createElementFromSnapshot(newSnap)
+    app.tree.add(el)
+    elementMap.current.set(newId, el)
+    refreshLayers()
+    app.editor?.select(el)
+  }, [pushHistory, refreshLayers])
+
   return {
     containerRef,
     isReady,
@@ -602,6 +1051,8 @@ export function useEditor() {
     currentTime,
     duration,
     isPlaying,
+    canUndo,
+    canRedo,
     importSVGFile,
     importSVGString,
     addShape,
@@ -623,6 +1074,11 @@ export function useEditor() {
     setDuration,
     exportSVG,
     exportPNG,
+    undo,
+    redo,
+    copySelected,
+    cutSelected,
+    paste,
   }
 }
 

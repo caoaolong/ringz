@@ -9,6 +9,8 @@ export interface LayerInfo {
   locked: boolean
   opacity: number
   depth: number
+  parentId: string | null
+  hasChildren: boolean
 }
 
 /** Animatable property keys */
@@ -64,6 +66,29 @@ export interface ShapePreset {
   type: 'Rect' | 'Ellipse' | 'Path' | 'Polygon' | 'Star' | 'Text'
   label: string
   icon: string
+}
+
+/** Snapshot of a single element for undo/redo and clipboard */
+export interface ElementSnapshot {
+  id: string
+  tag: string
+  name: string
+  props: ElementProps
+  visible: boolean
+  locked: boolean
+  // Type-specific extras
+  path?: string
+  text?: string
+  fontSize?: number
+  corners?: number
+}
+
+/** Full editor state snapshot for undo/redo */
+export interface EditorSnapshot {
+  elements: ElementSnapshot[]
+  tracks: [string, AnimationTrack][]
+  selectedId: string | null
+  viewport?: { x: number; y: number; scaleX: number; scaleY: number }
 }
 
 export const SHAPE_PRESETS: ShapePreset[] = [

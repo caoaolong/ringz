@@ -1,6 +1,6 @@
 // ===== Layer Panel: Left sidebar showing the element tree =====
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { CSSProperties } from 'react'
 import type { LayerInfo } from '../types'
 
@@ -29,6 +29,36 @@ const TAG_ICONS: Record<string, string> = {
 export function LayerPanel(props: LayerPanelProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
+
+  // Filter out children of collapsed nodes
+  const visibleLayers = useMemo(() => {
+    if (collapsedIds.size === 0) return props.layers
+    const result: LayerInfo[] = []
+    let skipDepth = -1
+    let skipParentId: string | null = null
+    for (const layer of props.layers) {
+      if (skipDepth >= 0 && layer.depth > skipDepth) {
+        // Still inside a collapsed subtree
+        continue
+      }
+      skipDepth = -1
+      result.push(layer)
+      if (collapsedIds.has(layer.id) && layer.hasChildren) {
+        skipDepth = layer.depth
+      }
+    }
+    return result
+  }, [props.layers, collapsedIds])
+
+  const toggleCollapse = (id: string) => {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const commitRename = () => {
     if (editingId) {
@@ -47,7 +77,7 @@ export function LayerPanel(props: LayerPanelProps) {
         {props.layers.length === 0 ? (
           <div className="empty-hint">暂无图层</div>
         ) : (
-          props.layers.map((layer) => (
+          visibleLayers.map((layer) => (
             <div
               key={layer.id}
               className={`layer-item ${props.selectedId === layer.id ? 'selected' : ''} ${
@@ -60,6 +90,20 @@ export function LayerPanel(props: LayerPanelProps) {
                 setEditValue(layer.name)
               }}
             >
+              {layer.hasChildren ? (
+                <button
+                  className="tree-toggle"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleCollapse(layer.id)
+                  }}
+                  title={collapsedIds.has(layer.id) ? '展开' : '折叠'}
+                >
+                  {collapsedIds.has(layer.id) ? '▶' : '▼'}
+                </button>
+              ) : (
+                <span className="tree-toggle-placeholder" />
+              )}
               <span className="layer-icon">{TAG_ICONS[layer.tag] || '◻'}</span>
               {editingId === layer.id ? (
                 <input
